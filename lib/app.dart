@@ -1,5 +1,6 @@
 import 'package:awan/features/onboarding/controllers/onboarding_controller.dart';
 import 'package:awan/features/auth/controllers/auth_controller.dart';
+import 'package:awan/features/medication/controllers/medication_controller.dart';
 import 'package:awan/core/routes/app_routes.dart';
 import 'features/screens/on_boarding_screen.dart';
 import 'package:awan/core/theme/app_theme.dart';
@@ -7,6 +8,7 @@ import 'package:awan/core/constants/app_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
+import 'services/notification_service.dart'; // Add this import
 
 class App extends StatelessWidget {
   const App({super.key});
@@ -19,8 +21,10 @@ class App extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => OnboardingController()),
         ChangeNotifierProvider(create: (_) => AuthController()),
+        ChangeNotifierProvider(create: (_) => MedicationController()),
       ],
       child: MaterialApp(
+        navigatorKey: NavigationService.navigatorKey, // Add this line
         debugShowCheckedModeBanner: false,
         title: AppConstants.appName,
         theme: AppTheme.lightTheme,
