@@ -24,7 +24,6 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
   String _userPhone = '';
   DateTime _selectedDate = DateTime.now();
 
-  // ✅ NEW: Animation controller for cycling icons
   late AnimationController _animationController;
   late Animation<double> _animation;
 
@@ -33,14 +32,11 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
     super.initState();
     _loadUserData();
 
-    // ✅ NEW: Initialize animation
     _animationController = AnimationController(
       duration: const Duration(seconds: 4),
       vsync: this,
     );
     _animation = Tween<double>(begin: 0, end: 1).animate(_animationController);
-
-    // Start the animation and repeat
     _animationController.repeat();
   }
 
@@ -72,10 +68,10 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
       body: SafeArea(child: _buildBody()),
       bottomNavigationBar: _buildBottomNavigation(),
       floatingActionButton: Transform.translate(
-        offset: const Offset(0, -20),
+        offset: const Offset(0, -8),
         child: Container(
-          width: 65,
-          height: 65,
+          width: 75,
+          height:75,
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [Colors.blue.shade400, Colors.blue.shade600],
@@ -96,62 +92,78 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
             child: InkWell(
               borderRadius: BorderRadius.circular(30),
               onTap: _navigateToChatbot,
-              child: Column(
-                children: [
-                  Center(
-                    child: Image.asset(
+              child: Center(
+                child: Column(
+                  children: [
+                    SizedBox(height: 10,),
+                    Image.asset(
                       "assets/logos/chat-bot.png",
                       width: 28,
                       height: 28,
                       color: Colors.white,
                     ),
-                  ),
-                  Text('ChatBot',style: TextStyle(color: Colors.white,fontSize: 14),)
-                ],
+                    Text('ChatBot',style: TextStyle(color: Colors.white,fontSize: 14),)
+                  ],
+                ),
               ),
             ),
           ),
         ),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 
   Widget _buildBody() {
-    switch (_selectedIndex) {
-      case 0:
-        return _buildHomeContent();
-      case 1:
-        return _buildMedicationsContent();
-      case 2:
-        return const SOSScreen();
-      case 3:
-        return _buildProfileContent();
-      default:
-        return _buildHomeContent();
-    }
+    return SafeArea(
+      child: IndexedStack(
+        index: _selectedIndex,
+        children: [
+          _buildHomeContent(),
+          _buildMedicationsContent(),
+          const SOSScreen(),
+          _buildProfileContent(),
+        ],
+      ),
+    );
   }
 
   Widget _buildHomeContent() {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final screenWidth = constraints.maxWidth;
+        final availableHeight = constraints.maxHeight;
 
-    return SingleChildScrollView(
-      padding: EdgeInsets.symmetric(
-        horizontal: screenWidth * 0.05,
-        vertical: 16,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildHeader(),
-          SizedBox(height: screenHeight * 0.02),
-          _buildQuickActions(),
-          SizedBox(height: screenHeight * 0.02),
-          _buildUpcomingMedications(),
-          SizedBox(height: screenHeight * 0.12), // Reduced space for floating button
-        ],
-      ),
+        return Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: EdgeInsets.symmetric(
+                  horizontal: screenWidth * 0.05,
+                  vertical: 16,
+                ),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: availableHeight - 120, // Account for bottom navigation
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildHeader(),
+                      const SizedBox(height: 16),
+                      _buildQuickActions(),
+                      const SizedBox(height: 16),
+                      _buildUpcomingMedications(),
+                      const SizedBox(height: 100), // Fixed space for floating button
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -214,9 +226,9 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
 
   Widget _buildQuickActions() {
     final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
 
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
@@ -232,33 +244,46 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
                   color: Colors.black87,
                 ),
               ),
-              SizedBox(height: screenHeight * 0.01),
-              DatePicker(
-                height: 90,
-                DateTime.now().subtract(const Duration(days: 14)),
-                initialSelectedDate: _selectedDate,
-                selectionColor: const Color(0xff0284C7),
-                selectedTextColor: Colors.white,
-                dayTextStyle: const TextStyle(color: Colors.black),
-                monthTextStyle: const TextStyle(color: Colors.black),
-                dateTextStyle: const TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.w600,
+              const SizedBox(height: 8),
+
+              // ✅ FIXED: Constrained date picker to prevent overflow
+              Container(
+                height: 90, // Fixed height prevents overflow
+                child: DatePicker(
+                  DateTime.now().subtract(const Duration(days: 14)),
+                  height: 85, // Slightly smaller than container
+                  initialSelectedDate: _selectedDate,
+                  selectionColor: const Color(0xff0284C7),
+                  selectedTextColor: Colors.white,
+                  dayTextStyle: const TextStyle(
+                    color: Colors.black,
+                    fontSize: 11,
+                  ),
+                  monthTextStyle: const TextStyle(
+                    color: Colors.black,
+                    fontSize: 9,
+                  ),
+                  dateTextStyle: const TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                  onDateChange: (date) {
+                    setState(() {
+                      _selectedDate = date;
+                    });
+                  },
                 ),
-                onDateChange: (date) {
-                  setState(() {
-                    _selectedDate = date;
-                  });
-                },
               ),
             ],
           ),
         ),
-        SizedBox(height: screenHeight * 0.03),
+        const SizedBox(height: 20),
 
+        // ✅ FIXED: Responsive button with fixed height
         Container(
           width: double.infinity,
-          height: screenHeight * 0.07,
+          height: 50, // Fixed height prevents overflow
           decoration: BoxDecoration(
             color: const Color(0xff0284C7),
             borderRadius: BorderRadius.circular(16),
@@ -275,24 +300,22 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
             child: InkWell(
               borderRadius: BorderRadius.circular(16),
               onTap: _navigateToAddMedication,
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04),
+              child: Center(
                 child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.add,
-                      size: screenWidth * 0.08,
+                      size: 20,
                       color: Colors.white,
                     ),
-                    SizedBox(width: screenWidth * 0.10),
-                    Expanded(
-                      child: Text(
-                        'Add New Medication',
-                        style: TextStyle(
-                          fontSize: screenWidth * 0.045,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Add New Medication',
+                      style: TextStyle(
+                        fontSize: screenWidth * 0.04,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
                     ),
                   ],
@@ -307,7 +330,6 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
 
   Widget _buildUpcomingMedications() {
     final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
 
     return Consumer<MedicationController>(
       builder: (context, medicationController, child) {
@@ -336,12 +358,12 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
                 ],
               ),
             ),
-            SizedBox(height: screenHeight * 0.01),
+            const SizedBox(height: 8),
 
             if (upcomingDoses.isEmpty)
               Container(
                 width: double.infinity,
-                padding: EdgeInsets.all(screenWidth * 0.06),
+                padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
@@ -354,18 +376,19 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
                   ],
                 ),
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    // ✅ UPDATED: Animated medication icon
-                    _buildAnimatedMedicationIcon(screenWidth),
-                    SizedBox(height: screenWidth * 0.03),
+                    _buildAnimatedMedicationIcon(screenWidth * 0.8),
+                    const SizedBox(height: 16),
                     Text(
                       'No medications for ${_formatDateForDisplay(_selectedDate)}',
                       style: TextStyle(
                         fontSize: screenWidth * 0.04,
                         color: Colors.grey.shade600,
                       ),
+                      textAlign: TextAlign.center,
                     ),
-                    SizedBox(height: screenWidth * 0.02),
+                    const SizedBox(height: 8),
                     Text(
                       'Tap "Add New Medication" to get started',
                       style: TextStyle(
@@ -378,37 +401,41 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
                 ),
               )
             else
-              ...upcomingDoses.map((dose) => Padding(
-                padding: EdgeInsets.only(bottom: screenHeight * 0.01),
-                child: MedicationReminderCard(
-                  medicationName: '${dose.medication.name} ${dose.medication.dosage}',
-                  time: dose.doseLabel,
-                  doseDescription: dose.doseDescription,
-                  isCompleted: dose.isTaken,
-                  medication: dose.medication,
-                  selectedDate: _selectedDate,
-                  doseNumber: dose.doseNumber,
-                  onComplete: () {
-                    medicationController.toggleMedicationDose(
-                        dose.medication.id,
-                        _selectedDate,
-                        dose.doseNumber
-                    );
-                  },
-                ),
-              )).toList(),
+              ...upcomingDoses.asMap().entries.map((entry) {
+                final index = entry.key;
+                final dose = entry.value;
+                return Padding(
+                  padding: EdgeInsets.only(
+                    bottom: index == upcomingDoses.length - 1 ? 0 : 12,
+                  ),
+                  child: MedicationReminderCard(
+                    medicationName: '${dose.medication.name} ${dose.medication.dosage}',
+                    time: dose.doseLabel,
+                    doseDescription: dose.doseDescription,
+                    isCompleted: dose.isTaken,
+                    medication: dose.medication,
+                    selectedDate: _selectedDate,
+                    doseNumber: dose.doseNumber,
+                    onComplete: () {
+                      medicationController.toggleMedicationDose(
+                          dose.medication.id,
+                          _selectedDate,
+                          dose.doseNumber
+                      );
+                    },
+                  ),
+                );
+              }).toList(),
           ],
         );
       },
     );
   }
 
-  // ✅ NEW: Animated medication icon widget
   Widget _buildAnimatedMedicationIcon(double screenWidth) {
     return AnimatedBuilder(
       animation: _animation,
       builder: (context, child) {
-        // Cycle through different medication types
         final medicationTypes = ['tablet', 'capsule', 'drop', 'injection'];
         final currentTypeIndex = (_animation.value * medicationTypes.length).floor() % medicationTypes.length;
         final currentType = medicationTypes[currentTypeIndex];
@@ -441,7 +468,6 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
     );
   }
 
-  // ✅ NEW: Get medication icon based on type
   IconData _getMedicationIcon(String type) {
     switch (type.toLowerCase()) {
       case 'tablet':
@@ -457,7 +483,6 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
     }
   }
 
-  // ✅ NEW: Get medication color based on type
   Color _getMedicationColor(String type) {
     switch (type.toLowerCase()) {
       case 'tablet':
@@ -488,7 +513,6 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // ✅ UPDATED: Animated medication icon in medications tab too
                   _buildAnimatedMedicationIcon(screenWidth),
                   SizedBox(height: screenHeight * 0.03),
                   Text(
@@ -559,7 +583,7 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
                 child: MedicationReminderCard(
                   medicationName: '${medication.name} ${medication.dosage}',
                   time: medication.time,
-                  isCompleted: medication.isCompletelyFinished, // ✅ FIXED: Show proper completion
+                  isCompleted: medication.isCompletelyFinished,
                   medication: medication,
                   onComplete: () {
                     medicationController.toggleMedicationTaken(medication.id);
@@ -639,7 +663,6 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
 
           SizedBox(height: screenHeight * 0.04),
 
-          // Info Card
           Card(
             elevation: 2,
             shape: RoundedRectangleBorder(
@@ -712,11 +735,11 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
 
   Widget _buildBottomNavigation() {
     return BottomNavigationBar(
-      backgroundColor:  Color(0xff0284C7),
+      backgroundColor: Colors.white,
       type: BottomNavigationBarType.fixed,
       currentIndex: _selectedIndex,
       onTap: (index) => setState(() => _selectedIndex = index),
-      selectedItemColor: Colors.white,
+      selectedItemColor: Color(0xff0284C7),
       unselectedItemColor: Colors.grey,
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
