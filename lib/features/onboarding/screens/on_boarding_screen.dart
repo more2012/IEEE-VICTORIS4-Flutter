@@ -121,7 +121,7 @@ class OnBoardingScreen extends StatelessWidget {
                             onPressed: () {
                               Navigator.pushReplacementNamed(
                                 context,
-                                AppConstants.homeRoute,
+                                AppConstants.loginRoute,
                               );
                             },
                             style: ElevatedButton.styleFrom(

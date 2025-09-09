@@ -1,14 +1,14 @@
-import 'package:awan/features/onboarding/controllers/onboarding_controller.dart';
-import 'package:awan/features/auth/controllers/auth_controller.dart';
-import 'package:awan/features/medication/controllers/medication_controller.dart';
-import 'package:awan/core/routes/app_routes.dart';
-import 'features/screens/on_boarding_screen.dart';
-import 'package:awan/core/theme/app_theme.dart';
-import 'package:awan/core/constants/app_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
-import 'services/notification_service.dart'; // Add this import
+import 'features/onboarding/controllers/onboarding_controller.dart';
+import 'features/auth/controllers/auth_controller.dart';
+import 'features/medication/controllers/medication_controller.dart';
+import 'core/routes/app_routes.dart';
+import 'features/onboarding/screens/on_boarding_screen.dart';
+import 'core/theme/app_theme.dart';
+import 'core/constants/app_constants.dart';
+import 'services/notification_service.dart';
 
 class App extends StatelessWidget {
   const App({super.key});

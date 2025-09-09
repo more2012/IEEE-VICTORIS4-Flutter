@@ -11,6 +11,7 @@ class AppConstants {
   static const String forgotPasswordRoute = '/forgot-password';
   static const String otpVerificationRoute = '/otp-verification';
   static const String resetPasswordRoute = '/reset-password';
+  static const String settingsRoute = '/settings';
 
   // Assets
   static const String onboardingImage1 = 'assets/logos/image 1.png';
@@ -18,7 +19,7 @@ class AppConstants {
   static const String onboardingImage3 = 'assets/logos/image 3.png';
 
   // Colors
-  static const int primaryColorValue = 0xFF2196F3;
+  static const int primaryColorValue = 0xFF0284C7;
   static const int secondaryColorValue = 0xFF03DAC6;
 
   // Dimensions

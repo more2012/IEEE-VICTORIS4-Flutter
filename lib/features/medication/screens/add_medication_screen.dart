@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controllers/medication_controller.dart';
 import '../models/medication_model.dart';
+import '../../../services/notification_service.dart';
 
 class AddMedicationScreen extends StatefulWidget {
   const AddMedicationScreen({super.key});
@@ -17,9 +18,14 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
   TimeOfDay _selectedTime = const TimeOfDay(hour: 8, minute: 0);
   String _selectedType = 'Tablet';
   int _timesPerDay = 1;
-  bool _isLoading = false; // Add loading state
+  bool _isLoading = false;
 
-  final List<String> _medicineTypes = ['Tablet', 'Capsule', 'Drop', 'Injection'];
+  final List<String> _medicineTypes = [
+    'Tablet',
+    'Capsule',
+    'Drop',
+    'Injection',
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -47,17 +53,17 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
               children: [
                 _buildHeader(screenWidth),
                 SizedBox(height: screenHeight * 0.02),
-                _buildBasicInfo(),
+                _buildBasicInfo(screenWidth),
                 SizedBox(height: screenHeight * 0.015),
-                _buildMedicineType(),
+                _buildMedicineType(screenWidth),
                 SizedBox(height: screenHeight * 0.015),
-                _buildDosage(),
+                _buildDosage(screenWidth),
                 SizedBox(height: screenHeight * 0.015),
-                _buildTime(),
+                _buildTime(screenWidth),
                 SizedBox(height: screenHeight * 0.015),
-                _buildFrequency(),
+                _buildFrequency(screenWidth),
                 SizedBox(height: screenHeight * 0.03),
-                _buildSaveButton(),
+                _buildSaveButton(screenWidth),
                 SizedBox(height: screenHeight * 0.02),
               ],
             ),
@@ -70,7 +76,10 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
   Widget _buildHeader(double screenWidth) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: EdgeInsets.symmetric(
+        horizontal: screenWidth * 0.05,
+        vertical: screenWidth * 0.04,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -97,12 +106,12 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
               color: Colors.blue,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: screenWidth * 0.03),
           FittedBox(
             child: Text(
               'Add New Medication',
               style: TextStyle(
-                fontSize: MediaQuery.of(context).size.width * 0.06,
+                fontSize: screenWidth * 0.06,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -112,9 +121,9 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
     );
   }
 
-  Widget _buildBasicInfo() {
+  Widget _buildBasicInfo(double screenWidth) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(screenWidth * 0.04),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -129,14 +138,14 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Medication Name',
             style: TextStyle(
-              fontSize: 15,
+              fontSize: screenWidth * 0.04,
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: screenWidth * 0.025),
           TextFormField(
             controller: _nameController,
             decoration: InputDecoration(
@@ -147,9 +156,9 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
               ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: screenWidth * 0.04,
+                vertical: screenWidth * 0.03,
               ),
             ),
             validator: (value) {
@@ -164,9 +173,9 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
     );
   }
 
-  Widget _buildMedicineType() {
+  Widget _buildMedicineType(double screenWidth) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(screenWidth * 0.04),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -181,16 +190,19 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Medicine Type',
             style: TextStyle(
-              fontSize: 15,
+              fontSize: screenWidth * 0.04,
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: screenWidth * 0.025),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            padding: EdgeInsets.symmetric(
+              horizontal: screenWidth * 0.04,
+              vertical: screenWidth * 0.01,
+            ),
             decoration: BoxDecoration(
               color: Colors.grey.shade50,
               borderRadius: BorderRadius.circular(12),
@@ -223,12 +235,17 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                     value: type,
                     child: Row(
                       children: [
-                        Icon(iconData, color: Colors.blue, size: 18),
-                        const SizedBox(width: 12),
+                        Icon(
+                          iconData,
+                          color: Colors.blue,
+                          size: screenWidth * 0.045,
+                        ),
+                        SizedBox(width: screenWidth * 0.03),
                         Flexible(
                           child: Text(
                             type,
                             overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: screenWidth * 0.04),
                           ),
                         ),
                       ],
@@ -250,9 +267,9 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
     );
   }
 
-  Widget _buildDosage() {
+  Widget _buildDosage(double screenWidth) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(screenWidth * 0.04),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -267,14 +284,14 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Dosage',
             style: TextStyle(
-              fontSize: 15,
+              fontSize: screenWidth * 0.04,
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: screenWidth * 0.025),
           TextFormField(
             controller: _dosageController,
             decoration: InputDecoration(
@@ -285,9 +302,9 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
               ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: screenWidth * 0.04,
+                vertical: screenWidth * 0.03,
               ),
             ),
             validator: (value) {
@@ -302,9 +319,9 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
     );
   }
 
-  Widget _buildTime() {
+  Widget _buildTime(double screenWidth) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(screenWidth * 0.04),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -319,37 +336,41 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Time',
             style: TextStyle(
-              fontSize: 15,
+              fontSize: screenWidth * 0.04,
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: screenWidth * 0.025),
           InkWell(
             onTap: _selectTime,
             borderRadius: BorderRadius.circular(12),
             child: Container(
-              padding: const EdgeInsets.all(14),
+              padding: EdgeInsets.all(screenWidth * 0.035),
               decoration: BoxDecoration(
                 color: Colors.grey.shade50,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.access_time, color: Colors.blue, size: 20),
-                  const SizedBox(width: 12),
+                  Icon(
+                    Icons.access_time,
+                    color: Colors.blue,
+                    size: screenWidth * 0.05,
+                  ),
+                  SizedBox(width: screenWidth * 0.03),
                   Expanded(
                     child: Text(
                       _selectedTime.format(context),
-                      style: const TextStyle(
-                        fontSize: 15,
+                      style: TextStyle(
+                        fontSize: screenWidth * 0.04,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
-                  const Icon(Icons.keyboard_arrow_right, size: 20),
+                  Icon(Icons.keyboard_arrow_right, size: screenWidth * 0.05),
                 ],
               ),
             ),
@@ -359,9 +380,9 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
     );
   }
 
-  Widget _buildFrequency() {
+  Widget _buildFrequency(double screenWidth) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(screenWidth * 0.04),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -376,37 +397,40 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'How many times per day?',
             style: TextStyle(
-              fontSize: 15,
+              fontSize: screenWidth * 0.04,
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: screenWidth * 0.02),
           Text(
             'You\'ll get $_timesPerDay reminder${_timesPerDay > 1 ? 's' : ''} throughout the day',
             style: TextStyle(
-              fontSize: 13,
+              fontSize: screenWidth * 0.035,
               color: Colors.grey.shade600,
               height: 1.3,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: screenWidth * 0.03),
           Row(
             children: [
-              const Text('Times per day: '),
+              Text(
+                'Times per day: ',
+                style: TextStyle(fontSize: screenWidth * 0.04),
+              ),
               Text(
                 '$_timesPerDay',
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  fontSize: 16,
+                  fontSize: screenWidth * 0.045,
                   color: Colors.blue,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: screenWidth * 0.01),
           Slider(
             value: _timesPerDay.toDouble(),
             min: 1,
@@ -419,11 +443,11 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
               });
             },
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: screenWidth * 0.01),
           Text(
             _getFrequencyDescription(),
             style: TextStyle(
-              fontSize: 11,
+              fontSize: screenWidth * 0.03,
               color: Colors.grey.shade600,
               fontStyle: FontStyle.italic,
               height: 1.2,
@@ -436,10 +460,10 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
     );
   }
 
-  Widget _buildSaveButton() {
+  Widget _buildSaveButton(double screenWidth) {
     return SizedBox(
       width: double.infinity,
-      height: 52,
+      height: screenWidth * 0.13,
       child: ElevatedButton(
         onPressed: _isLoading ? null : _saveMedication,
         style: ElevatedButton.styleFrom(
@@ -450,22 +474,22 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
           elevation: 2,
         ),
         child: _isLoading
-            ? const SizedBox(
-          width: 20,
-          height: 20,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-          ),
-        )
-            : const Text(
-          'Add Medication',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-          ),
-        ),
+            ? SizedBox(
+                width: screenWidth * 0.05,
+                height: screenWidth * 0.05,
+                child: const CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+            : Text(
+                'Add Medication',
+                style: TextStyle(
+                  fontSize: screenWidth * 0.04,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
       ),
     );
   }
@@ -501,6 +525,8 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
     }
   }
 
+  // Removed unused _requestNotificationPermissions, handled inline in save
+
   void _saveMedication() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
@@ -508,8 +534,22 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
       });
 
       try {
+        final hasPermission = await NotificationService.requestPermissions();
+        if (!hasPermission) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Please enable notifications to receive reminders.',
+                ),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          }
+        }
+
         final medication = Medication(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          id: 'temp', // Temporary ID, will be replaced by controller
           name: _nameController.text.trim(),
           dosage: _dosageController.text.trim(),
           time: _selectedTime.format(context),
@@ -518,11 +558,9 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
           nextDoseTime: DateTime.now().add(const Duration(hours: 1)),
         );
 
-        // Add medication to controller
-        context.read<MedicationController>().addMedication(medication);
+        await context.read<MedicationController>().addMedication(medication);
 
         if (mounted) {
-          // Show success message
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -530,15 +568,35 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
               ),
               backgroundColor: Colors.green,
               behavior: SnackBarBehavior.floating,
-              duration: const Duration(seconds: 3),
+              duration: const Duration(seconds: 4),
+              action: SnackBarAction(
+                label: 'Test',
+                textColor: Colors.white,
+                onPressed: () {
+                  final addedMedication = context
+                      .read<MedicationController>()
+                      .medications
+                      .last;
+                  context.read<MedicationController>().testNotification(
+                    addedMedication.id,
+                  );
+                },
+              ),
             ),
           );
 
-          // Navigate back
+          // Immediately send a test notification once added so user sees it works
+          final addedMedication = context
+              .read<MedicationController>()
+              .medications
+              .last;
+          await context.read<MedicationController>().testNotification(
+            addedMedication.id,
+          );
+
           Navigator.pop(context);
         }
       } catch (e) {
-        // Handle errors
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

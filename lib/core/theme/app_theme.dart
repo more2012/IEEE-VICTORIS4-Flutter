@@ -7,15 +7,19 @@ class AppTheme {
       useMaterial3: true,
       primarySwatch: Colors.blue,
       primaryColor: const Color(AppConstants.primaryColorValue),
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: const Color(AppConstants.primaryColorValue),
+        primary: const Color(AppConstants.primaryColorValue),
+      ),
       scaffoldBackgroundColor: Colors.white,
 
       // AppBar Theme
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.blue,
+      appBarTheme: AppBarTheme(
+        backgroundColor: const Color(AppConstants.primaryColorValue),
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: TextStyle(
+        titleTextStyle: const TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.w600,
           color: Colors.white,
@@ -25,7 +29,7 @@ class AppTheme {
       // Elevated Button Theme
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blue,
+          backgroundColor: const Color(AppConstants.primaryColorValue),
           foregroundColor: Colors.white,
           elevation: 0,
           shape: RoundedRectangleBorder(
@@ -36,16 +40,16 @@ class AppTheme {
       ),
 
       // Text Theme
-      textTheme: const TextTheme(
+      textTheme: TextTheme(
         headlineLarge: TextStyle(
           fontSize: 28,
           fontWeight: FontWeight.bold,
-          color: Colors.blue,
+          color: const Color(AppConstants.primaryColorValue),
         ),
         headlineMedium: TextStyle(
           fontSize: 24,
           fontWeight: FontWeight.w600,
-          color: Colors.blue,
+          color: const Color(AppConstants.primaryColorValue),
         ),
         bodyLarge: TextStyle(fontSize: 16, color: Colors.black87),
         bodyMedium: TextStyle(fontSize: 14, color: Colors.grey),

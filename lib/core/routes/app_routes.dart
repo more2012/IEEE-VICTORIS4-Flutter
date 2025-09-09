@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import '../../features/screens/on_boarding_screen.dart';
+import '../../features/onboarding/screens/on_boarding_screen.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/signup_screen.dart';
 import '../../features/auth/screens/forgot_password_screen.dart';
 import '../../features/auth/screens/otp_verification_screen.dart';
 import '../../features/auth/screens/reset_password_screen.dart';
 import '../../screens/homepage.dart';
+import '../../screens/settings_screen.dart';
 import '../constants/app_constants.dart';
 
 class AppRoutes {
@@ -17,6 +18,7 @@ class AppRoutes {
     AppConstants.forgotPasswordRoute: (_) => const ForgotPasswordScreen(),
     AppConstants.otpVerificationRoute: (_) => const OTPVerificationScreen(),
     AppConstants.resetPasswordRoute: (_) => const ResetPasswordScreen(),
+    AppConstants.settingsRoute: (_) => const SettingsScreen(),
   };
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -54,6 +56,11 @@ class AppRoutes {
       case AppConstants.resetPasswordRoute:
         return MaterialPageRoute(
           builder: (_) => const ResetPasswordScreen(),
+          settings: settings,
+        );
+      case AppConstants.settingsRoute:
+        return MaterialPageRoute(
+          builder: (_) => const SettingsScreen(),
           settings: settings,
         );
       default:

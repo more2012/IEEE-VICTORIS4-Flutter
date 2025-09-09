@@ -43,6 +43,7 @@ dependencies:
   flutter_local_notifications: ^17.2.2
   timezone: ^0.9.4
   permission_handler: ^11.3.1
+  date_picker_timeline: ^1.2.7
 
 
 dev_dependencies:

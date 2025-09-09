@@ -13,7 +13,7 @@ class AuthController with ChangeNotifier {
   // Form controllers
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController nameController = TextEditingController();
+  final TextEditingController fullNameController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController otpController = TextEditingController();
   final TextEditingController newPasswordController = TextEditingController();
@@ -29,8 +29,8 @@ class AuthController with ChangeNotifier {
   // Form validation
   String? validateEmail(String? value) => Validators.validateEmail(value);
   String? validatePassword(String? value) => Validators.validatePassword(value);
-  String? validateName(String? value) =>
-      Validators.validateRequired(value, 'Name');
+  String? validateFullName(String? value) =>
+      Validators.validateRequired(value, 'Full Name');
   String? validatePhone(String? value) {
     if (value != null && value.isNotEmpty) {
       if (value.length < 10) {
@@ -131,7 +131,7 @@ class AuthController with ChangeNotifier {
 
     try {
       final request = SignUpRequest(
-        name: nameController.text.trim(),
+        fullName: fullNameController.text.trim(),
         email: emailController.text.trim(),
         password: passwordController.text,
         phone: phoneController.text.trim().isNotEmpty
@@ -250,7 +250,7 @@ class AuthController with ChangeNotifier {
   void clearControllers() {
     emailController.clear();
     passwordController.clear();
-    nameController.clear();
+    fullNameController.clear();
     phoneController.clear();
     otpController.clear();
     newPasswordController.clear();
@@ -261,7 +261,7 @@ class AuthController with ChangeNotifier {
   void dispose() {
     emailController.dispose();
     passwordController.dispose();
-    nameController.dispose();
+    fullNameController.dispose();
     phoneController.dispose();
     otpController.dispose();
     newPasswordController.dispose();

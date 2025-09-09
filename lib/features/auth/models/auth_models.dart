@@ -1,3 +1,5 @@
+import 'user_model.dart';
+
 class LoginRequest {
   final String email;
   final String password;
@@ -10,20 +12,25 @@ class LoginRequest {
 }
 
 class SignUpRequest {
-  final String name;
+  final String fullName;
   final String email;
   final String password;
   final String? phone;
 
   SignUpRequest({
-    required this.name,
+    required this.fullName,
     required this.email,
     required this.password,
     this.phone,
   });
 
   Map<String, dynamic> toJson() {
-    return {'name': name, 'email': email, 'password': password, 'phone': phone};
+    return {
+      'full_name': fullName,
+      'email': email,
+      'password': password,
+      'phone': phone,
+    };
   }
 }
 
@@ -67,22 +74,44 @@ class ResetPasswordRequest {
 class AuthResponse {
   final bool success;
   final String message;
-  final String? token;
-  final Map<String, dynamic>? user;
+  final UserModel? user;
+  final Tokens? tokens;
 
   AuthResponse({
     required this.success,
     required this.message,
-    this.token,
     this.user,
+    this.tokens,
   });
 
   factory AuthResponse.fromJson(Map<String, dynamic> json) {
+    // Check if response has user and tokens (successful registration)
+    final hasUser = json['user'] != null;
+    final hasTokens = json['tokens'] != null;
+    final hasMessage = json['message'] != null;
+
     return AuthResponse(
-      success: json['success'] ?? false,
-      message: json['message'] ?? '',
-      token: json['token'],
-      user: json['user'],
+      success: json['success'] ?? (hasUser && hasTokens),
+      message:
+          json['message'] ??
+          (hasMessage ? json['message'] : 'Registration completed'),
+      user: hasUser ? UserModel.fromJson(json['user']) : null,
+      tokens: hasTokens ? Tokens.fromJson(json['tokens']) : null,
     );
+  }
+}
+
+class Tokens {
+  final String access;
+  final String refresh;
+
+  Tokens({required this.access, required this.refresh});
+
+  factory Tokens.fromJson(Map<String, dynamic> json) {
+    return Tokens(access: json['access'] ?? '', refresh: json['refresh'] ?? '');
+  }
+
+  Map<String, dynamic> toJson() {
+    return {'access': access, 'refresh': refresh};
   }
 }

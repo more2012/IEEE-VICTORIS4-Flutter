@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:async';
 
 class ChatbotScreen extends StatefulWidget {
   const ChatbotScreen({super.key});
@@ -17,17 +18,21 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
   // Your real Gemini API key
   static const String _apiKey = 'AIzaSyDmd8_Z9KEODppuEDk6Xfeh-YO7F25CfhU';
-  static const String _apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+  static const String _apiUrl =
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
 
   @override
   void initState() {
     super.initState();
     // Welcome message
-    _messages.add(ChatMessage(
-      text: "Hello! I'm your AI medical assistant powered by Google Gemini. I can help you with general health questions, medication information, and wellness tips. How can I assist you today?",
-      isBot: true,
-      timestamp: DateTime.now(),
-    ));
+    _messages.add(
+      ChatMessage(
+        text:
+            "Hello! I'm your AI medical assistant powered by Google Gemini. I can help you with general health questions, medication information, and wellness tips. How can I assist you today?",
+        isBot: true,
+        timestamp: DateTime.now(),
+      ),
+    );
   }
 
   @override
@@ -42,7 +47,10 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Medical Chatbot', style: TextStyle(fontSize: 16)),
-                Text('Powered by Gemini AI', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                Text(
+                  'Powered by Gemini AI',
+                  style: TextStyle(fontSize: 10, color: Colors.grey),
+                ),
               ],
             ),
           ],
@@ -189,10 +197,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                 const SizedBox(width: 12),
                 Text(
                   'AI is thinking...',
-                  style: TextStyle(
-                    color: Colors.grey.shade600,
-                    fontSize: 14,
-                  ),
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
                 ),
               ],
             ),
@@ -248,13 +253,15 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                 decoration: BoxDecoration(
                   color: _isLoading ? Colors.grey.shade300 : Colors.blue,
                   borderRadius: BorderRadius.circular(25),
-                  boxShadow: _isLoading ? null : [
-                    BoxShadow(
-                      color: Colors.blue.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+                  boxShadow: _isLoading
+                      ? null
+                      : [
+                          BoxShadow(
+                            color: Colors.blue.withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                 ),
                 child: Icon(
                   Icons.send,
@@ -277,11 +284,9 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
     // Add user message
     setState(() {
-      _messages.add(ChatMessage(
-        text: userMessage,
-        isBot: false,
-        timestamp: DateTime.now(),
-      ));
+      _messages.add(
+        ChatMessage(text: userMessage, isBot: false, timestamp: DateTime.now()),
+      );
       _isLoading = true;
     });
 
@@ -292,20 +297,21 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       final response = await _sendToGemini(userMessage);
 
       setState(() {
-        _messages.add(ChatMessage(
-          text: response,
-          isBot: true,
-          timestamp: DateTime.now(),
-        ));
+        _messages.add(
+          ChatMessage(text: response, isBot: true, timestamp: DateTime.now()),
+        );
         _isLoading = false;
       });
     } catch (e) {
       setState(() {
-        _messages.add(ChatMessage(
-          text: "I apologize, but I'm having trouble connecting to my AI service right now. Please check your internet connection and try again. Error: ${e.toString()}",
-          isBot: true,
-          timestamp: DateTime.now(),
-        ));
+        _messages.add(
+          ChatMessage(
+            text:
+                "I apologize, but I'm having trouble connecting to my AI service right now. Please check your internet connection and try again. Error: ${e.toString()}",
+            isBot: true,
+            timestamp: DateTime.now(),
+          ),
+        );
         _isLoading = false;
       });
     }
@@ -314,18 +320,25 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   }
 
   Future<String> _sendToGemini(String message) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$_apiUrl?key=$_apiKey'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'contents': [
-            {
-              'parts': [
-                {
-                  'text': '''You are a helpful medical assistant AI. Please provide helpful, accurate, and safe medical information about: "$message"
+    // Retry with exponential backoff for transient errors (e.g., 429/503)
+    const int maxAttempts = 3;
+    int attempt = 0;
+    Duration delay = const Duration(milliseconds: 600);
+
+    while (true) {
+      attempt += 1;
+      try {
+        final response = await http
+            .post(
+              Uri.parse('$_apiUrl?key=$_apiKey'),
+              headers: {'Content-Type': 'application/json'},
+              body: jsonEncode({
+                'contents': [
+                  {
+                    'parts': [
+                      {
+                        'text':
+                            '''You are a helpful medical assistant AI. Please provide helpful, accurate, and safe medical information about: "$message"
 
 Important guidelines:
 - Always remind users to consult healthcare professionals for serious concerns
@@ -333,56 +346,88 @@ Important guidelines:
 - Be helpful but emphasize the importance of professional medical advice
 - If asked about emergency situations, advise to seek immediate medical attention
 - Keep responses clear, concise, and easy to understand
-- Focus on general health education and wellness tips when appropriate'''
-                }
-              ]
-            }
-          ],
-          'generationConfig': {
-            'temperature': 0.7,
-            'topK': 40,
-            'topP': 0.95,
-            'maxOutputTokens': 1024,
-            'stopSequences': []
-          },
-          'safetySettings': [
-            {
-              'category': 'HARM_CATEGORY_HARASSMENT',
-              'threshold': 'BLOCK_MEDIUM_AND_ABOVE'
-            },
-            {
-              'category': 'HARM_CATEGORY_HATE_SPEECH',
-              'threshold': 'BLOCK_MEDIUM_AND_ABOVE'
-            },
-            {
-              'category': 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
-              'threshold': 'BLOCK_MEDIUM_AND_ABOVE'
-            },
-            {
-              'category': 'HARM_CATEGORY_DANGEROUS_CONTENT',
-              'threshold': 'BLOCK_MEDIUM_AND_ABOVE'
-            }
-          ]
-        }),
-      );
+- Focus on general health education and wellness tips when appropriate''',
+                      },
+                    ],
+                  },
+                ],
+                'generationConfig': {
+                  'temperature': 0.7,
+                  'topK': 40,
+                  'topP': 0.95,
+                  'maxOutputTokens': 1024,
+                  'stopSequences': [],
+                },
+                'safetySettings': [
+                  {
+                    'category': 'HARM_CATEGORY_HARASSMENT',
+                    'threshold': 'BLOCK_MEDIUM_AND_ABOVE',
+                  },
+                  {
+                    'category': 'HARM_CATEGORY_HATE_SPEECH',
+                    'threshold': 'BLOCK_MEDIUM_AND_ABOVE',
+                  },
+                  {
+                    'category': 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+                    'threshold': 'BLOCK_MEDIUM_AND_ABOVE',
+                  },
+                  {
+                    'category': 'HARM_CATEGORY_DANGEROUS_CONTENT',
+                    'threshold': 'BLOCK_MEDIUM_AND_ABOVE',
+                  },
+                ],
+              }),
+            )
+            .timeout(const Duration(seconds: 20));
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-
-        if (data['candidates'] != null && data['candidates'].isNotEmpty) {
-          final candidate = data['candidates'][0];
-          if (candidate['content'] != null && candidate['content']['parts'] != null) {
-            final text = candidate['content']['parts'][0]['text'];
-            return text ?? 'I apologize, but I couldn\'t generate a proper response. Please try rephrasing your question.';
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          if (data['candidates'] != null && data['candidates'].isNotEmpty) {
+            final candidate = data['candidates'][0];
+            if (candidate['content'] != null &&
+                candidate['content']['parts'] != null) {
+              final text = candidate['content']['parts'][0]['text'];
+              return text ??
+                  'I apologize, but I couldn\'t generate a proper response. Please try rephrasing your question.';
+            }
           }
+          return 'I received your question but couldn\'t process it properly. Please try asking in a different way.';
         }
 
-        return 'I received your question but couldn\'t process it properly. Please try asking in a different way.';
-      } else {
-        throw Exception('API Error: ${response.statusCode} - ${response.body}');
+        // Transient errors: 429 Too Many Requests, 503 Service Unavailable
+        if (response.statusCode == 429 || response.statusCode == 503) {
+          if (attempt >= maxAttempts) {
+            return 'The AI service is busy right now. Please try again in a moment.';
+          }
+          await Future.delayed(delay);
+          delay *= 2;
+          continue;
+        }
+
+        // Other errors
+        try {
+          final err = jsonDecode(response.body);
+          final msg = err['error']?['message'] ?? response.body;
+          return 'Sorry, I couldn\'t process that request: $msg';
+        } catch (_) {
+          return 'Sorry, I couldn\'t process that request. (HTTP ${response.statusCode})';
+        }
+      } on http.ClientException catch (_) {
+        if (attempt >= maxAttempts) {
+          return 'Network error while contacting the AI service. Please check your connection and try again.';
+        }
+        await Future.delayed(delay);
+        delay *= 2;
+      } on TimeoutException catch (_) {
+        if (attempt >= maxAttempts) {
+          return 'The AI service timed out. Please try again.';
+        }
+        await Future.delayed(delay);
+        delay *= 2;
+      } catch (e) {
+        // Unknown error
+        return 'Unexpected error while contacting the AI service.';
       }
-    } catch (e) {
-      throw Exception('Failed to get response from AI: $e');
     }
   }
 
@@ -401,11 +446,13 @@ Important guidelines:
             onPressed: () {
               setState(() {
                 _messages.clear();
-                _messages.add(ChatMessage(
-                  text: "Chat cleared! How can I help you today?",
-                  isBot: true,
-                  timestamp: DateTime.now(),
-                ));
+                _messages.add(
+                  ChatMessage(
+                    text: "Chat cleared! How can I help you today?",
+                    isBot: true,
+                    timestamp: DateTime.now(),
+                  ),
+                );
               });
               Navigator.pop(context);
             },

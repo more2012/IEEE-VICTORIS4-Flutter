@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../shared/widgets/medical_card.dart';
-import '../shared/widgets/quick_action_button.dart';
+import 'dart:convert';
 import '../shared/widgets/medication_reminder_card.dart';
-import '../shared/widgets/emergency_button.dart';
+import 'package:date_picker_timeline/date_picker_timeline.dart';
 import '../features/medication/controllers/medication_controller.dart';
 import '../features/medication/screens/add_medication_screen.dart';
 import '../features/chatbot/screens/chatbot_screen.dart';
 import '../features/sos/screens/sos_screen.dart';
-import '../features/medication/models/medication_model.dart'; // Add this import
+import '../services/storage_service.dart';
+import '../core/constants/app_constants.dart';
 
 class Homepage extends StatefulWidget {
   const Homepage({super.key});
@@ -19,6 +19,32 @@ class Homepage extends StatefulWidget {
 
 class _HomepageState extends State<Homepage> {
   int _selectedIndex = 0;
+  String _userName = '';
+  String _userEmail = '';
+  String _userPhone = '';
+  DateTime _selectedDate = DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  void _loadUserData() {
+    try {
+      final userJsonString = StorageService.getString('user_data');
+      if (userJsonString != null && userJsonString.isNotEmpty) {
+        final userMap = json.decode(userJsonString) as Map<String, dynamic>;
+        setState(() {
+          _userName = (userMap['full_name'] ?? '').toString();
+          _userEmail = (userMap['email'] ?? '').toString();
+          _userPhone = (userMap['phone'] ?? '').toString();
+        });
+      }
+    } catch (_) {
+      // ignore parsing errors silently
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,92 +89,150 @@ class _HomepageState extends State<Homepage> {
 
   Widget _buildBody() {
     switch (_selectedIndex) {
-      case 0: return _buildHomeContent();
-      case 1: return _buildMedicationsContent();
-      case 2: return const SOSScreen();
-      case 3: return _buildProfileContent();
-      default: return _buildHomeContent();
+      case 0:
+        return _buildHomeContent();
+      case 1:
+        return _buildMedicationsContent();
+      case 2:
+        return const SOSScreen();
+      case 3:
+        return _buildProfileContent();
+      default:
+        return _buildHomeContent();
     }
   }
 
   Widget _buildHomeContent() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.symmetric(
+        horizontal: screenWidth * 0.05, // 5% padding
+        vertical: 16,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildHeader(),
-          const SizedBox(height: 30),
+          SizedBox(height: screenHeight * 0.025),
           _buildQuickActions(),
-          const SizedBox(height: 30),
+          SizedBox(height: screenHeight * 0.025),
           _buildUpcomingMedications(),
-          const SizedBox(height: 30),
-          const SizedBox(height: 100),
+          SizedBox(height: screenHeight * 0.15), // Space for floating button
         ],
       ),
     );
   }
 
   Widget _buildHeader() {
-    return Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Good ${_getTimeGreeting()},',
-                style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                'Ahmed',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(screenWidth * 0.04),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Good ${_getTimeGreeting()},',
+                  style: TextStyle(
+                    fontSize: screenWidth * 0.04,
+                    color: Colors.grey.shade600,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'How are you feeling today?',
-                style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
-              ),
-            ],
+                SizedBox(height: screenWidth * 0.01),
+                Text(
+                  "Hello, ${_userName.isNotEmpty ? _userName : 'User'}",
+                  style: TextStyle(
+                    fontSize: screenWidth * 0.07,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xff0284C7),
+                  ),
+                ),
+                SizedBox(height: screenWidth * 0.02),
+                Text(
+                  'How are you feeling today?',
+                  style: TextStyle(
+                    fontSize: screenWidth * 0.035,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-        Container(
-          width: 60,
-          height: 60,
-          decoration: BoxDecoration(
-            color: Colors.blue.shade100,
-            borderRadius: BorderRadius.circular(30),
+          Container(
+            width: screenWidth * 0.15,
+            height: screenWidth * 0.15,
+            decoration: BoxDecoration(
+              color: Colors.blue.shade100,
+              borderRadius: BorderRadius.circular(screenWidth * 0.075),
+            ),
+            child: Icon(
+              Icons.person,
+              size: screenWidth * 0.08,
+              color: Colors.blue,
+            ),
           ),
-          child: const Icon(Icons.person, size: 30, color: Colors.blue),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildQuickActions() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Quick Actions',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.02),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Today , ${_formatHeaderDate(_selectedDate)}',
+                style: TextStyle(
+                  fontSize: screenWidth * 0.045,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 8),
+              DatePicker(
+                DateTime.now().subtract(const Duration(days: 14)),
+                initialSelectedDate: _selectedDate,
+                selectionColor: const Color(0xff0284C7),
+                selectedTextColor: Colors.white,
+                dayTextStyle: TextStyle(color: Colors.grey.shade700),
+                monthTextStyle: TextStyle(color: Colors.grey.shade700),
+                dateTextStyle: TextStyle(
+                  color: Colors.grey.shade700,
+                  fontWeight: FontWeight.w600,
+                ),
+                onDateChange: (date) {
+                  setState(() {
+                    _selectedDate = date;
+                  });
+                },
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: screenHeight * 0.02),
 
         Container(
           width: double.infinity,
-          height: 120,
+          constraints: BoxConstraints(
+            minHeight: screenHeight * 0.05,
+            maxHeight: screenHeight * 0.07,
+          ),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Color(0xff0284C7),
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
@@ -164,23 +248,28 @@ class _HomepageState extends State<Homepage> {
               borderRadius: BorderRadius.circular(16),
               onTap: _navigateToAddMedication,
               child: Padding(
-                padding: const EdgeInsets.all(20),
+                padding: EdgeInsets.all(screenWidth * 0.04),
                 child: Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.blue.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: const Icon(
-                        Icons.medication,
-                        size: 32,
-                        color: Colors.blue,
-                      ),
+                    Icon(
+                      Icons.add,
+                      size: screenWidth * 0.08,
+                      color: Colors.white,
                     ),
-                    const SizedBox(width: 20),
-                    const Expanded(
+                    // Container(
+                    //   padding: EdgeInsets.all(screenWidth * 0.04),
+                    //   decoration: BoxDecoration(
+                    //     color: Colors.blue.withOpacity(0.1),
+                    //     borderRadius: BorderRadius.circular(16),
+                    //   ),
+                    //   child: Icon(
+                    //     Icons.add,
+                    //     size: screenWidth * 0.08,
+                    //     color: Colors.blue,
+                    //   ),
+                    // ),
+                    SizedBox(width: screenWidth * 0.10),
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -188,27 +277,29 @@ class _HomepageState extends State<Homepage> {
                           Text(
                             'Add New Medication',
                             style: TextStyle(
-                              fontSize: 18,
+                              fontSize: screenWidth * 0.045,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+                              color: Colors.white,
                             ),
                           ),
-                          SizedBox(height: 8),
-                          Text(
-                            'Track your daily medications and never miss a dose',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey,
-                            ),
-                          ),
+                          SizedBox(height: screenWidth * 0.01),
+                          // Text(
+                          //   'Track your daily medications and never miss a dose',
+                          //   style: TextStyle(
+                          //     fontSize: screenWidth * 0.035,
+                          //     color: Colors.grey,
+                          //   ),
+                          //   maxLines: 2,
+                          //   overflow: TextOverflow.ellipsis,
+                          // ),
                         ],
                       ),
                     ),
-                    const Icon(
-                      Icons.arrow_forward_ios,
-                      color: Colors.grey,
-                      size: 16,
-                    ),
+                    // Icon(
+                    //   Icons.arrow_forward_ios,
+                    //   color: Colors.grey,
+                    //   size: screenWidth * 0.04,
+                    // ),
                   ],
                 ),
               ),
@@ -220,36 +311,44 @@ class _HomepageState extends State<Homepage> {
   }
 
   Widget _buildUpcomingMedications() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Consumer<MedicationController>(
       builder: (context, medicationController, child) {
-        final upcomingMeds = medicationController.getUpcomingMedications();
+        final upcomingMeds = medicationController.getMedicationsByDate(
+          _selectedDate,
+        );
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Upcoming Medications',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.02),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Medications',
+                    style: TextStyle(
+                      fontSize: screenWidth * 0.05,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
                   ),
-                ),
-                TextButton(
-                  onPressed: () => setState(() => _selectedIndex = 1),
-                  child: const Text('See All'),
-                ),
-              ],
+                  TextButton(
+                    onPressed: () => setState(() => _selectedIndex = 1),
+                    child: const Text('See All'),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: screenHeight * 0.02),
 
             if (upcomingMeds.isEmpty)
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(24),
+                padding: EdgeInsets.all(screenWidth * 0.06),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
@@ -265,42 +364,49 @@ class _HomepageState extends State<Homepage> {
                   children: [
                     Icon(
                       Icons.medication_outlined,
-                      size: 48,
+                      size: screenWidth * 0.12,
                       color: Colors.grey.shade400,
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: screenWidth * 0.03),
                     Text(
                       'No medications added yet',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: screenWidth * 0.04,
                         color: Colors.grey.shade600,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: screenWidth * 0.02),
                     Text(
                       'Tap "Add New Medication" to get started',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: screenWidth * 0.035,
                         color: Colors.grey.shade500,
                       ),
+                      textAlign: TextAlign.center,
                     ),
                   ],
                 ),
               )
             else
-            // UPDATED: Added medication object to each card
-              ...upcomingMeds.map((medication) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: MedicationReminderCard(
-                  medicationName: '${medication.name} ${medication.dosage}',
-                  time: medication.time,
-                  isCompleted: medication.isTaken,
-                  medication: medication, // ✅ Added this line
-                  onComplete: () {
-                    medicationController.toggleMedicationTaken(medication.id);
-                  },
-                ),
-              )).toList(),
+              ...upcomingMeds
+                  .map(
+                    (medication) => Padding(
+                      padding: EdgeInsets.only(bottom: screenHeight * 0.015),
+                      child: MedicationReminderCard(
+                        medicationName:
+                            '${medication.name} ${medication.dosage}',
+                        time: medication.time,
+                        isCompleted: medication.isTaken,
+                        medication: medication,
+                        onComplete: () {
+                          medicationController.toggleMedicationTaken(
+                            medication.id,
+                          );
+                        },
+                      ),
+                    ),
+                  )
+                  .toList(),
           ],
         );
       },
@@ -308,53 +414,77 @@ class _HomepageState extends State<Homepage> {
   }
 
   Widget _buildMedicationsContent() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Consumer<MedicationController>(
       builder: (context, medicationController, child) {
         final allMedications = medicationController.medications;
 
         if (allMedications.isEmpty) {
           return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.medication_outlined,
-                  size: 80,
-                  color: Colors.grey.shade400,
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  'No Medications',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Add your first medication to get started',
-                  style: TextStyle(color: Colors.grey.shade600),
-                ),
-                const SizedBox(height: 30),
-                ElevatedButton.icon(
-                  onPressed: _navigateToAddMedication,
-                  icon: const Icon(Icons.add),
-                  label: const Text('Add Medication'),
-                ),
-              ],
+            child: Padding(
+              padding: EdgeInsets.all(screenWidth * 0.1),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.medication_outlined,
+                    size: screenWidth * 0.2,
+                    color: Colors.grey.shade400,
+                  ),
+                  SizedBox(height: screenHeight * 0.03),
+                  Text(
+                    'No Medications',
+                    style: TextStyle(
+                      fontSize: screenWidth * 0.06,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: screenHeight * 0.01),
+                  Text(
+                    'Add your first medication to get started',
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontSize: screenWidth * 0.04,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: screenHeight * 0.04),
+                  ElevatedButton.icon(
+                    onPressed: _navigateToAddMedication,
+                    icon: const Icon(Icons.add),
+                    label: const Text('Add Medication'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: screenWidth * 0.08,
+                        vertical: screenHeight * 0.015,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         }
 
         return SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.symmetric(
+            horizontal: screenWidth * 0.05,
+            vertical: 16,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'My Medications',
                     style: TextStyle(
-                      fontSize: 24,
+                      fontSize: screenWidth * 0.06,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -364,21 +494,30 @@ class _HomepageState extends State<Homepage> {
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: screenHeight * 0.02),
 
-              // UPDATED: Added medication object to each card
-              ...allMedications.map((medication) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: MedicationReminderCard(
-                  medicationName: '${medication.name} ${medication.dosage}',
-                  time: medication.time,
-                  isCompleted: medication.isTaken,
-                  medication: medication, // ✅ Added this line
-                  onComplete: () {
-                    medicationController.toggleMedicationTaken(medication.id);
-                  },
-                ),
-              )).toList(),
+              ...allMedications
+                  .map(
+                    (medication) => Padding(
+                      padding: EdgeInsets.only(bottom: screenHeight * 0.015),
+                      child: MedicationReminderCard(
+                        medicationName:
+                            '${medication.name} ${medication.dosage}',
+                        time: medication.time,
+                        isCompleted: medication.isTaken,
+                        medication: medication,
+                        onComplete: () {
+                          medicationController.toggleMedicationTaken(
+                            medication.id,
+                          );
+                        },
+                      ),
+                    ),
+                  )
+                  .toList(),
+              SizedBox(
+                height: screenHeight * 0.1,
+              ), // Bottom padding for floating button
             ],
           ),
         );
@@ -387,14 +526,145 @@ class _HomepageState extends State<Homepage> {
   }
 
   Widget _buildProfileContent() {
-    return const Center(
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    return SingleChildScrollView(
+      padding: EdgeInsets.symmetric(
+        horizontal: screenWidth * 0.05,
+        vertical: 16,
+      ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.person, size: 80, color: Colors.grey),
-          SizedBox(height: 20),
-          Text('Profile Screen', style: TextStyle(fontSize: 24)),
-          Text('Coming soon...'),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Profile',
+                style: TextStyle(
+                  fontSize: screenWidth * 0.07,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.settings),
+                onPressed: _navigateToSettings,
+              ),
+            ],
+          ),
+          SizedBox(height: screenHeight * 0.02),
+          Center(
+            child: Container(
+              width: screenWidth * 0.3,
+              height: screenWidth * 0.3,
+              decoration: BoxDecoration(
+                color: Colors.blue.shade100,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.person,
+                size: screenWidth * 0.18,
+                color: Colors.blue,
+              ),
+            ),
+          ),
+          SizedBox(height: screenHeight * 0.03),
+          Center(
+            child: Text(
+              _userName.isNotEmpty ? _userName : 'User',
+              style: TextStyle(
+                fontSize: screenWidth * 0.06,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          SizedBox(height: screenHeight * 0.01),
+          if (_userEmail.isNotEmpty)
+            Center(
+              child: Text(
+                _userEmail,
+                style: TextStyle(
+                  color: Colors.grey.shade700,
+                  fontSize: screenWidth * 0.04,
+                ),
+              ),
+            ),
+          SizedBox(height: screenHeight * 0.03),
+          Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(color: Colors.grey.shade300),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.badge_outlined, color: Colors.blue),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Full Name',
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: screenWidth * 0.035,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        _userName.isNotEmpty ? _userName : '—',
+                        style: TextStyle(fontSize: screenWidth * 0.04),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      const Icon(Icons.email_outlined, color: Colors.blue),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Email',
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: screenWidth * 0.035,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        _userEmail.isNotEmpty ? _userEmail : '—',
+                        style: TextStyle(fontSize: screenWidth * 0.04),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      const Icon(Icons.phone_outlined, color: Colors.blue),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Phone',
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: screenWidth * 0.035,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        _userPhone.isNotEmpty ? _userPhone : '—',
+                        style: TextStyle(fontSize: screenWidth * 0.04),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -409,7 +679,10 @@ class _HomepageState extends State<Homepage> {
       unselectedItemColor: Colors.grey,
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-        BottomNavigationBarItem(icon: Icon(Icons.medication), label: 'Medications'),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.medication),
+          label: 'Medications',
+        ),
         BottomNavigationBarItem(icon: Icon(Icons.emergency), label: 'SOS'),
         BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
       ],
@@ -423,21 +696,40 @@ class _HomepageState extends State<Homepage> {
     return 'Evening';
   }
 
+  String _formatHeaderDate(DateTime date) {
+    const monthNames = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    final m = monthNames[date.month - 1];
+    return '$m ${date.day}';
+  }
+
   void _navigateToAddMedication() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const AddMedicationScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const AddMedicationScreen()),
     );
   }
 
   void _navigateToChatbot() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const ChatbotScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const ChatbotScreen()),
     );
+  }
+
+  void _navigateToSettings() {
+    Navigator.pushNamed(context, AppConstants.settingsRoute);
   }
 }

@@ -56,10 +56,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
                 // Name Field
                 CustomTextField(
-                  controller: context.read<AuthController>().nameController,
+                  controller: context.read<AuthController>().fullNameController,
                   labelText: 'Full Name',
                   type: TextFieldType.name,
-                  validator: context.read<AuthController>().validateName,
+                  validator: context.read<AuthController>().validateFullName,
                 ),
                 const SizedBox(height: 20),
 
