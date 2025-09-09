@@ -42,7 +42,6 @@ class _HomepageState extends State<Homepage> {
         });
       }
     } catch (_) {
-      // ignore parsing errors silently
     }
   }
 
@@ -52,33 +51,44 @@ class _HomepageState extends State<Homepage> {
       backgroundColor: Colors.grey.shade50,
       body: SafeArea(child: _buildBody()),
       bottomNavigationBar: _buildBottomNavigation(),
-      floatingActionButton: Container(
-        width: 60,
-        height: 60,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.blue.shade400, Colors.blue.shade600],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(30),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.blue.withOpacity(0.3),
-              blurRadius: 15,
-              offset: const Offset(0, 4),
+      floatingActionButton: Transform.translate(
+        offset: const Offset(0, -20),
+        child: Container(
+          width: 65,
+          height: 65,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.blue.shade400, Colors.blue.shade600],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-          ],
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
             borderRadius: BorderRadius.circular(30),
-            onTap: _navigateToChatbot,
-            child: const Icon(
-              Icons.chat_outlined,
-              color: Colors.white,
-              size: 28,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.blue.withOpacity(0.3),
+                blurRadius: 15,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(30),
+              onTap: _navigateToChatbot,
+              child: Column(
+                children: [
+                  Center(
+                    child: Image.asset(
+                      "assets/logos/chat-bot.png",
+                      width: 28,
+                      height: 28,
+                      color: Colors.white,
+                    ),
+                  ),
+                  Text('ChatBot',style: TextStyle(color: Colors.white,fontSize: 14),)
+                ],
+              ),
             ),
           ),
         ),
@@ -108,18 +118,18 @@ class _HomepageState extends State<Homepage> {
 
     return SingleChildScrollView(
       padding: EdgeInsets.symmetric(
-        horizontal: screenWidth * 0.05, // 5% padding
+        horizontal: screenWidth * 0.05,
         vertical: 16,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildHeader(),
-          SizedBox(height: screenHeight * 0.025),
+          SizedBox(height: screenHeight * 0.02),
           _buildQuickActions(),
-          SizedBox(height: screenHeight * 0.025),
+          SizedBox(height: screenHeight * 0.02),
           _buildUpcomingMedications(),
-          SizedBox(height: screenHeight * 0.15), // Space for floating button
+          SizedBox(height: screenHeight * 0.12), // Reduced space for floating button
         ],
       ),
     );
@@ -150,7 +160,7 @@ class _HomepageState extends State<Homepage> {
                   style: TextStyle(
                     fontSize: screenWidth * 0.07,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xff0284C7),
+                    color: const Color(0xff0284C7),
                   ),
                 ),
                 SizedBox(height: screenWidth * 0.02),
@@ -195,23 +205,24 @@ class _HomepageState extends State<Homepage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Today , ${_formatHeaderDate(_selectedDate)}',
+                'Today, ${_formatHeaderDate(_selectedDate)}',
                 style: TextStyle(
                   fontSize: screenWidth * 0.045,
                   fontWeight: FontWeight.w600,
                   color: Colors.black87,
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: screenHeight * 0.01),
               DatePicker(
+                height: 90,
                 DateTime.now().subtract(const Duration(days: 14)),
                 initialSelectedDate: _selectedDate,
                 selectionColor: const Color(0xff0284C7),
                 selectedTextColor: Colors.white,
-                dayTextStyle: TextStyle(color: Colors.grey.shade700),
-                monthTextStyle: TextStyle(color: Colors.grey.shade700),
-                dateTextStyle: TextStyle(
-                  color: Colors.grey.shade700,
+                dayTextStyle: const TextStyle(color: Colors.black),
+                monthTextStyle: const TextStyle(color: Colors.black),
+                dateTextStyle: const TextStyle(
+                  color: Colors.black,
                   fontWeight: FontWeight.w600,
                 ),
                 onDateChange: (date) {
@@ -223,16 +234,13 @@ class _HomepageState extends State<Homepage> {
             ],
           ),
         ),
-        SizedBox(height: screenHeight * 0.02),
+        SizedBox(height: screenHeight * 0.03),
 
         Container(
           width: double.infinity,
-          constraints: BoxConstraints(
-            minHeight: screenHeight * 0.05,
-            maxHeight: screenHeight * 0.07,
-          ),
+          height: screenHeight * 0.07,
           decoration: BoxDecoration(
-            color: Color(0xff0284C7),
+            color: const Color(0xff0284C7),
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
@@ -248,7 +256,7 @@ class _HomepageState extends State<Homepage> {
               borderRadius: BorderRadius.circular(16),
               onTap: _navigateToAddMedication,
               child: Padding(
-                padding: EdgeInsets.all(screenWidth * 0.04),
+                padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04),
                 child: Row(
                   children: [
                     Icon(
@@ -256,50 +264,17 @@ class _HomepageState extends State<Homepage> {
                       size: screenWidth * 0.08,
                       color: Colors.white,
                     ),
-                    // Container(
-                    //   padding: EdgeInsets.all(screenWidth * 0.04),
-                    //   decoration: BoxDecoration(
-                    //     color: Colors.blue.withOpacity(0.1),
-                    //     borderRadius: BorderRadius.circular(16),
-                    //   ),
-                    //   child: Icon(
-                    //     Icons.add,
-                    //     size: screenWidth * 0.08,
-                    //     color: Colors.blue,
-                    //   ),
-                    // ),
                     SizedBox(width: screenWidth * 0.10),
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'Add New Medication',
-                            style: TextStyle(
-                              fontSize: screenWidth * 0.045,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                          SizedBox(height: screenWidth * 0.01),
-                          // Text(
-                          //   'Track your daily medications and never miss a dose',
-                          //   style: TextStyle(
-                          //     fontSize: screenWidth * 0.035,
-                          //     color: Colors.grey,
-                          //   ),
-                          //   maxLines: 2,
-                          //   overflow: TextOverflow.ellipsis,
-                          // ),
-                        ],
+                      child: Text(
+                        'Add New Medication',
+                        style: TextStyle(
+                          fontSize: screenWidth * 0.045,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
-                    // Icon(
-                    //   Icons.arrow_forward_ios,
-                    //   color: Colors.grey,
-                    //   size: screenWidth * 0.04,
-                    // ),
                   ],
                 ),
               ),
@@ -316,9 +291,7 @@ class _HomepageState extends State<Homepage> {
 
     return Consumer<MedicationController>(
       builder: (context, medicationController, child) {
-        final upcomingMeds = medicationController.getMedicationsByDate(
-          _selectedDate,
-        );
+        final upcomingMeds = medicationController.getMedicationsByDate(_selectedDate);
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -343,7 +316,7 @@ class _HomepageState extends State<Homepage> {
                 ],
               ),
             ),
-            SizedBox(height: screenHeight * 0.02),
+            SizedBox(height: screenHeight * 0.01), // Reduced spacing
 
             if (upcomingMeds.isEmpty)
               Container(
@@ -369,7 +342,7 @@ class _HomepageState extends State<Homepage> {
                     ),
                     SizedBox(height: screenWidth * 0.03),
                     Text(
-                      'No medications added yet',
+                      'No medications for ${_formatDateForDisplay(_selectedDate)}',
                       style: TextStyle(
                         fontSize: screenWidth * 0.04,
                         color: Colors.grey.shade600,
@@ -388,25 +361,18 @@ class _HomepageState extends State<Homepage> {
                 ),
               )
             else
-              ...upcomingMeds
-                  .map(
-                    (medication) => Padding(
-                      padding: EdgeInsets.only(bottom: screenHeight * 0.015),
-                      child: MedicationReminderCard(
-                        medicationName:
-                            '${medication.name} ${medication.dosage}',
-                        time: medication.time,
-                        isCompleted: medication.isTaken,
-                        medication: medication,
-                        onComplete: () {
-                          medicationController.toggleMedicationTaken(
-                            medication.id,
-                          );
-                        },
-                      ),
-                    ),
-                  )
-                  .toList(),
+              ...upcomingMeds.map((medication) => Padding(
+                padding: EdgeInsets.only(bottom: screenHeight * 0.01), // Reduced spacing
+                child: MedicationReminderCard(
+                  medicationName: '${medication.name} ${medication.dosage}',
+                  time: medication.time,
+                  isCompleted: medication.isTaken,
+                  medication: medication,
+                  onComplete: () {
+                    medicationController.toggleMedicationTaken(medication.id);
+                  },
+                ),
+              )).toList(),
           ],
         );
       },
@@ -484,6 +450,7 @@ class _HomepageState extends State<Homepage> {
                   Text(
                     'My Medications',
                     style: TextStyle(
+                      color: Colors.black,
                       fontSize: screenWidth * 0.06,
                       fontWeight: FontWeight.bold,
                     ),
@@ -496,28 +463,19 @@ class _HomepageState extends State<Homepage> {
               ),
               SizedBox(height: screenHeight * 0.02),
 
-              ...allMedications
-                  .map(
-                    (medication) => Padding(
-                      padding: EdgeInsets.only(bottom: screenHeight * 0.015),
-                      child: MedicationReminderCard(
-                        medicationName:
-                            '${medication.name} ${medication.dosage}',
-                        time: medication.time,
-                        isCompleted: medication.isTaken,
-                        medication: medication,
-                        onComplete: () {
-                          medicationController.toggleMedicationTaken(
-                            medication.id,
-                          );
-                        },
-                      ),
-                    ),
-                  )
-                  .toList(),
-              SizedBox(
-                height: screenHeight * 0.1,
-              ), // Bottom padding for floating button
+              ...allMedications.map((medication) => Padding(
+                padding: EdgeInsets.only(bottom: screenHeight * 0.015),
+                child: MedicationReminderCard(
+                  medicationName: '${medication.name} ${medication.dosage}',
+                  time: medication.time,
+                  isCompleted: medication.isTaken,
+                  medication: medication,
+                  onComplete: () {
+                    medicationController.toggleMedicationTaken(medication.id);
+                  },
+                ),
+              )).toList(),
+              SizedBox(height: screenHeight * 0.1),
             ],
           ),
         );
@@ -531,11 +489,11 @@ class _HomepageState extends State<Homepage> {
 
     return SingleChildScrollView(
       padding: EdgeInsets.symmetric(
-        horizontal: screenWidth * 0.05,
-        vertical: 16,
+        horizontal: screenWidth * 0.06,
+        vertical: 20,
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -543,123 +501,83 @@ class _HomepageState extends State<Homepage> {
               Text(
                 'Profile',
                 style: TextStyle(
-                  fontSize: screenWidth * 0.07,
+                  fontSize: screenWidth * 0.075,
                   fontWeight: FontWeight.bold,
+                  color: Colors.black87,
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.settings),
+                icon: const Icon(Icons.settings, size: 28),
                 onPressed: _navigateToSettings,
               ),
             ],
           ),
-          SizedBox(height: screenHeight * 0.02),
-          Center(
-            child: Container(
-              width: screenWidth * 0.3,
-              height: screenWidth * 0.3,
-              decoration: BoxDecoration(
-                color: Colors.blue.shade100,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.person,
-                size: screenWidth * 0.18,
-                color: Colors.blue,
-              ),
+          SizedBox(height: screenHeight * 0.03),
+
+          CircleAvatar(
+            radius: screenWidth * 0.18,
+            backgroundColor: Colors.blue.shade100,
+            child: Icon(
+              Icons.person,
+              size: screenWidth * 0.2,
+              color: Colors.blue,
             ),
           ),
           SizedBox(height: screenHeight * 0.03),
-          Center(
-            child: Text(
-              _userName.isNotEmpty ? _userName : 'User',
-              style: TextStyle(
-                fontSize: screenWidth * 0.06,
-                fontWeight: FontWeight.bold,
-              ),
+
+          Text(
+            _userName.isNotEmpty ? _userName : 'User',
+            style: TextStyle(
+              fontSize: screenWidth * 0.07,
+              fontWeight: FontWeight.w700,
+              color: Colors.black,
             ),
+            textAlign: TextAlign.center,
           ),
           SizedBox(height: screenHeight * 0.01),
+
           if (_userEmail.isNotEmpty)
-            Center(
-              child: Text(
-                _userEmail,
-                style: TextStyle(
-                  color: Colors.grey.shade700,
-                  fontSize: screenWidth * 0.04,
-                ),
+            Text(
+              _userEmail,
+              style: TextStyle(
+                color: Colors.grey.shade700,
+                fontSize: screenWidth * 0.045,
               ),
+              textAlign: TextAlign.center,
             ),
-          SizedBox(height: screenHeight * 0.03),
+
+          SizedBox(height: screenHeight * 0.04),
+
+          // Info Card
           Card(
-            elevation: 0,
+            elevation: 2,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(16),
               side: BorderSide(color: Colors.grey.shade300),
             ),
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.badge_outlined, color: Colors.blue),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          'Full Name',
-                          style: TextStyle(
-                            color: Colors.grey.shade600,
-                            fontSize: screenWidth * 0.035,
-                          ),
-                        ),
-                      ),
-                      Text(
-                        _userName.isNotEmpty ? _userName : '—',
-                        style: TextStyle(fontSize: screenWidth * 0.04),
-                      ),
-                    ],
+                  _buildInfoRow(
+                    icon: Icons.badge_outlined,
+                    label: 'Full Name',
+                    value: _userName.isNotEmpty ? _userName : '—',
+                    screenWidth: screenWidth,
                   ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      const Icon(Icons.email_outlined, color: Colors.blue),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          'Email',
-                          style: TextStyle(
-                            color: Colors.grey.shade600,
-                            fontSize: screenWidth * 0.035,
-                          ),
-                        ),
-                      ),
-                      Text(
-                        _userEmail.isNotEmpty ? _userEmail : '—',
-                        style: TextStyle(fontSize: screenWidth * 0.04),
-                      ),
-                    ],
+                  Divider(color: Colors.grey.shade300, height: 24),
+                  _buildInfoRow(
+                    icon: Icons.email_outlined,
+                    label: 'Email',
+                    value: _userEmail.isNotEmpty ? _userEmail : '—',
+                    screenWidth: screenWidth,
                   ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      const Icon(Icons.phone_outlined, color: Colors.blue),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          'Phone',
-                          style: TextStyle(
-                            color: Colors.grey.shade600,
-                            fontSize: screenWidth * 0.035,
-                          ),
-                        ),
-                      ),
-                      Text(
-                        _userPhone.isNotEmpty ? _userPhone : '—',
-                        style: TextStyle(fontSize: screenWidth * 0.04),
-                      ),
-                    ],
+                  Divider(color: Colors.grey.shade300, height: 24),
+                  _buildInfoRow(
+                    icon: Icons.phone_outlined,
+                    label: 'Phone',
+                    value: _userPhone.isNotEmpty ? _userPhone : '—',
+                    screenWidth: screenWidth,
                   ),
                 ],
               ),
@@ -670,19 +588,49 @@ class _HomepageState extends State<Homepage> {
     );
   }
 
+  Widget _buildInfoRow({
+    required IconData icon,
+    required String label,
+    required String value,
+    required double screenWidth,
+  }) {
+    return Row(
+      children: [
+        Icon(icon, color: Colors.blue, size: 26),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(
+              color: Colors.grey.shade600,
+              fontSize: screenWidth * 0.04,
+            ),
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: screenWidth * 0.045,
+            fontWeight: FontWeight.w500,
+            color: Colors.black87,
+          ),
+        ),
+      ],
+    );
+  }
+
+
   Widget _buildBottomNavigation() {
     return BottomNavigationBar(
+      backgroundColor:  Color(0xff0284C7),
       type: BottomNavigationBarType.fixed,
       currentIndex: _selectedIndex,
       onTap: (index) => setState(() => _selectedIndex = index),
-      selectedItemColor: Colors.blue,
+      selectedItemColor: Colors.white,
       unselectedItemColor: Colors.grey,
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.medication),
-          label: 'Medications',
-        ),
+        BottomNavigationBarItem(icon: Icon(Icons.medication), label: 'Medications'),
         BottomNavigationBarItem(icon: Icon(Icons.emergency), label: 'SOS'),
         BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
       ],
@@ -698,21 +646,18 @@ class _HomepageState extends State<Homepage> {
 
   String _formatHeaderDate(DateTime date) {
     const monthNames = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
     ];
-    final m = monthNames[date.month - 1];
-    return '$m ${date.day}';
+    return '${monthNames[date.month - 1]} ${date.day}';
+  }
+
+  String _formatDateForDisplay(DateTime date) {
+    final today = DateTime.now();
+    if (date.year == today.year && date.month == today.month && date.day == today.day) {
+      return 'today';
+    }
+    return _formatHeaderDate(date);
   }
 
   void _navigateToAddMedication() {

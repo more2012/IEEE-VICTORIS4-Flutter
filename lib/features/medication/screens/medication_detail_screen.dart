@@ -22,7 +22,7 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
   String _dosageInfo = '';
   String _interactions = '';
 
-  // Your Gemini API key
+  //Gemini API key
   static const String _apiKey = 'AIzaSyDmd8_Z9KEODppuEDk6Xfeh-YO7F25CfhU';
   static const String _apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
 
@@ -43,9 +43,9 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
             child: Column(
               children: [
                 _buildMedicationHeader(),
-                const SizedBox(height: 20),
+                const SizedBox(height: 8),
                 _buildQuickStats(),
-                const SizedBox(height: 20),
+                const SizedBox(height: 10),
                 if (_isLoadingInfo) _buildLoadingCard(),
                 if (_drugInfo.isNotEmpty) _buildInfoSection('About This Medication', _drugInfo, Icons.info_outline),
                 if (_dosageInfo.isNotEmpty) _buildInfoSection('Dosage Information', _dosageInfo, Icons.medication),
@@ -63,7 +63,7 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
 
   Widget _buildAppBar() {
     return SliverAppBar(
-      expandedHeight: 120,
+      expandedHeight: 60,
       floating: false,
       pinned: true,
       backgroundColor: _getMedicationColor(),
@@ -93,8 +93,9 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
 
   Widget _buildMedicationHeader() {
     return Container(
+      width: double.infinity,
       margin: const EdgeInsets.all(20),
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -106,48 +107,53 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
           ),
         ],
       ),
-      child: Column(
+      child: Row(
         children: [
-          // Medication Image
           Container(
-            width: 100,
-            height: 100,
+            width: 80,
+            height: 80,
             decoration: BoxDecoration(
               color: _getMedicationColor().withOpacity(0.1),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Icon(
               _getMedicationIcon(),
-              size: 50,
+              size: 40,
               color: _getMedicationColor(),
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(width: 20),
 
-          // Medication Name & Type
-          Text(
-            widget.medication.name,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: _getMedicationColor().withOpacity(0.1),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              widget.medication.type,
-              style: TextStyle(
-                color: _getMedicationColor(),
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
-              ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.medication.name,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: _getMedicationColor().withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    widget.medication.type,
+                    style: TextStyle(
+                      color: _getMedicationColor(),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -155,9 +161,10 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
     );
   }
 
+
   Widget _buildQuickStats() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 20,vertical: 10),
       child: Row(
         children: [
           Expanded(
@@ -221,7 +228,7 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
           Text(
             title,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 18,
               color: Colors.grey.shade600,
             ),
           ),
@@ -306,7 +313,7 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
           Text(
             content,
             style: TextStyle(
-              fontSize: 15,
+              fontSize: 18,
               color: Colors.grey.shade700,
               height: 1.5,
             ),

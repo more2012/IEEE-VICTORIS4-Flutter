@@ -16,7 +16,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   final List<ChatMessage> _messages = [];
   bool _isLoading = false;
 
-  // Your real Gemini API key
+  //Gemini API key
   static const String _apiKey = 'AIzaSyDmd8_Z9KEODppuEDk6Xfeh-YO7F25CfhU';
   static const String _apiUrl =
       'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
@@ -41,12 +41,12 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       appBar: AppBar(
         title: const Row(
           children: [
-            Icon(Icons.smart_toy, color: Colors.blue),
+            Icon(Icons.smart_toy, color: Colors.blue,size: 30,),
             SizedBox(width: 8),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Medical Chatbot', style: TextStyle(fontSize: 16)),
+                Text('Medical Chatbot', style: TextStyle(fontSize: 16,color: Colors.black)),
                 Text(
                   'Powered by Gemini AI',
                   style: TextStyle(fontSize: 10, color: Colors.grey),
