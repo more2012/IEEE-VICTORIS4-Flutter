@@ -17,17 +17,37 @@ class Homepage extends StatefulWidget {
   State<Homepage> createState() => _HomepageState();
 }
 
-class _HomepageState extends State<Homepage> {
+class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
   int _selectedIndex = 0;
   String _userName = '';
   String _userEmail = '';
   String _userPhone = '';
   DateTime _selectedDate = DateTime.now();
 
+  // ✅ NEW: Animation controller for cycling icons
+  late AnimationController _animationController;
+  late Animation<double> _animation;
+
   @override
   void initState() {
     super.initState();
     _loadUserData();
+
+    // ✅ NEW: Initialize animation
+    _animationController = AnimationController(
+      duration: const Duration(seconds: 4),
+      vsync: this,
+    );
+    _animation = Tween<double>(begin: 0, end: 1).animate(_animationController);
+
+    // Start the animation and repeat
+    _animationController.repeat();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
   void _loadUserData() {
@@ -291,7 +311,7 @@ class _HomepageState extends State<Homepage> {
 
     return Consumer<MedicationController>(
       builder: (context, medicationController, child) {
-        final upcomingMeds = medicationController.getMedicationsByDate(_selectedDate);
+        final upcomingDoses = medicationController.getMedicationsByDate(_selectedDate);
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -316,9 +336,9 @@ class _HomepageState extends State<Homepage> {
                 ],
               ),
             ),
-            SizedBox(height: screenHeight * 0.01), // Reduced spacing
+            SizedBox(height: screenHeight * 0.01),
 
-            if (upcomingMeds.isEmpty)
+            if (upcomingDoses.isEmpty)
               Container(
                 width: double.infinity,
                 padding: EdgeInsets.all(screenWidth * 0.06),
@@ -335,11 +355,8 @@ class _HomepageState extends State<Homepage> {
                 ),
                 child: Column(
                   children: [
-                    Icon(
-                      Icons.medication_outlined,
-                      size: screenWidth * 0.12,
-                      color: Colors.grey.shade400,
-                    ),
+                    // ✅ UPDATED: Animated medication icon
+                    _buildAnimatedMedicationIcon(screenWidth),
                     SizedBox(height: screenWidth * 0.03),
                     Text(
                       'No medications for ${_formatDateForDisplay(_selectedDate)}',
@@ -361,15 +378,22 @@ class _HomepageState extends State<Homepage> {
                 ),
               )
             else
-              ...upcomingMeds.map((medication) => Padding(
-                padding: EdgeInsets.only(bottom: screenHeight * 0.01), // Reduced spacing
+              ...upcomingDoses.map((dose) => Padding(
+                padding: EdgeInsets.only(bottom: screenHeight * 0.01),
                 child: MedicationReminderCard(
-                  medicationName: '${medication.name} ${medication.dosage}',
-                  time: medication.time,
-                  isCompleted: medication.isTaken,
-                  medication: medication,
+                  medicationName: '${dose.medication.name} ${dose.medication.dosage}',
+                  time: dose.doseLabel,
+                  doseDescription: dose.doseDescription,
+                  isCompleted: dose.isTaken,
+                  medication: dose.medication,
+                  selectedDate: _selectedDate,
+                  doseNumber: dose.doseNumber,
                   onComplete: () {
-                    medicationController.toggleMedicationTaken(medication.id);
+                    medicationController.toggleMedicationDose(
+                        dose.medication.id,
+                        _selectedDate,
+                        dose.doseNumber
+                    );
                   },
                 ),
               )).toList(),
@@ -377,6 +401,76 @@ class _HomepageState extends State<Homepage> {
         );
       },
     );
+  }
+
+  // ✅ NEW: Animated medication icon widget
+  Widget _buildAnimatedMedicationIcon(double screenWidth) {
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        // Cycle through different medication types
+        final medicationTypes = ['tablet', 'capsule', 'drop', 'injection'];
+        final currentTypeIndex = (_animation.value * medicationTypes.length).floor() % medicationTypes.length;
+        final currentType = medicationTypes[currentTypeIndex];
+
+        return Container(
+          width: screenWidth * 0.25,
+          height: screenWidth * 0.25,
+          decoration: BoxDecoration(
+            color: _getMedicationColor(currentType).withOpacity(0.1),
+            borderRadius: BorderRadius.circular(screenWidth * 0.125),
+            border: Border.all(
+              color: _getMedicationColor(currentType).withOpacity(0.3),
+              width: 2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: _getMedicationColor(currentType).withOpacity(0.2),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Icon(
+            _getMedicationIcon(currentType),
+            size: screenWidth * 0.12,
+            color: _getMedicationColor(currentType),
+          ),
+        );
+      },
+    );
+  }
+
+  // ✅ NEW: Get medication icon based on type
+  IconData _getMedicationIcon(String type) {
+    switch (type.toLowerCase()) {
+      case 'tablet':
+        return Icons.medication;
+      case 'capsule':
+        return Icons.medical_services;
+      case 'drop':
+        return Icons.water_drop;
+      case 'injection':
+        return Icons.vaccines;
+      default:
+        return Icons.medication;
+    }
+  }
+
+  // ✅ NEW: Get medication color based on type
+  Color _getMedicationColor(String type) {
+    switch (type.toLowerCase()) {
+      case 'tablet':
+        return Colors.blue;
+      case 'capsule':
+        return Colors.green;
+      case 'drop':
+        return Colors.cyan;
+      case 'injection':
+        return Colors.red;
+      default:
+        return Colors.blue;
+    }
   }
 
   Widget _buildMedicationsContent() {
@@ -394,11 +488,8 @@ class _HomepageState extends State<Homepage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.medication_outlined,
-                    size: screenWidth * 0.2,
-                    color: Colors.grey.shade400,
-                  ),
+                  // ✅ UPDATED: Animated medication icon in medications tab too
+                  _buildAnimatedMedicationIcon(screenWidth),
                   SizedBox(height: screenHeight * 0.03),
                   Text(
                     'No Medications',
@@ -468,7 +559,7 @@ class _HomepageState extends State<Homepage> {
                 child: MedicationReminderCard(
                   medicationName: '${medication.name} ${medication.dosage}',
                   time: medication.time,
-                  isCompleted: medication.isTaken,
+                  isCompleted: medication.isCompletelyFinished, // ✅ FIXED: Show proper completion
                   medication: medication,
                   onComplete: () {
                     medicationController.toggleMedicationTaken(medication.id);
@@ -618,7 +709,6 @@ class _HomepageState extends State<Homepage> {
       ],
     );
   }
-
 
   Widget _buildBottomNavigation() {
     return BottomNavigationBar(

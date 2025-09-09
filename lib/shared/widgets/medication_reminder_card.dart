@@ -5,24 +5,36 @@ import 'package:flutter/material.dart';
 class MedicationReminderCard extends StatelessWidget {
   final String medicationName;
   final String time;
+  final String? doseDescription;
   final bool isCompleted;
   final VoidCallback? onTap;
   final VoidCallback? onComplete;
-  final Medication? medication; // Add this parameter
+  final Medication? medication;
+  final DateTime? selectedDate;
+  final int? doseNumber;
 
   const MedicationReminderCard({
     super.key,
     required this.medicationName,
     required this.time,
+    this.doseDescription,
     required this.isCompleted,
     this.onTap,
     this.onComplete,
-    this.medication, // Add this
+    this.medication,
+    this.selectedDate,
+    this.doseNumber,
   });
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
+
+    final isCompletelyFinished = medication?.isCompletelyFinished ?? false;
+
+    final dateSpecificTaken = selectedDate != null && medication != null && doseNumber != null
+        ? medication!.isDoseTakenForDate(selectedDate!, doseNumber!)
+        : isCompleted;
 
     return GestureDetector(
       onTap: () {
@@ -44,9 +56,11 @@ class MedicationReminderCard extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isCompleted
-                ? Colors.green.withOpacity(0.3)
-                : Colors.blue.withOpacity(0.3),
+            color: isCompletelyFinished
+                ? Colors.green.withOpacity(0.5)
+                : dateSpecificTaken
+                ? Colors.blue.withOpacity(0.3)
+                : Colors.grey.withOpacity(0.3),
             width: 1,
           ),
           boxShadow: [
@@ -62,12 +76,24 @@ class MedicationReminderCard extends StatelessWidget {
             Container(
               padding: EdgeInsets.all(screenWidth * 0.02),
               decoration: BoxDecoration(
-                color: (isCompleted ? Colors.green : Colors.blue).withOpacity(0.1),
+                color: isCompletelyFinished
+                    ? Colors.green.withOpacity(0.1)
+                    : dateSpecificTaken
+                    ? Colors.blue.withOpacity(0.1)
+                    : _getMedicationTypeColor(medication?.type ?? 'Tablet').withOpacity(0.1), // ✅ UPDATED: Dynamic color
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
-                isCompleted ? Icons.check_circle : Icons.medication,
-                color: isCompleted ? Colors.green : Colors.blue,
+                isCompletelyFinished
+                    ? Icons.check_circle
+                    : dateSpecificTaken
+                    ? Icons.check_circle_outline
+                    : _getMedicationTypeIcon(medication?.type ?? 'Tablet'), // ✅ UPDATED: Dynamic icon
+                color: isCompletelyFinished
+                    ? Colors.green
+                    : dateSpecificTaken
+                    ? Colors.blue
+                    : _getMedicationTypeColor(medication?.type ?? 'Tablet'), // ✅ UPDATED: Dynamic color
                 size: screenWidth * 0.06,
               ),
             ),
@@ -82,7 +108,7 @@ class MedicationReminderCard extends StatelessWidget {
                       fontSize: screenWidth * 0.04,
                       fontWeight: FontWeight.w600,
                       color: Colors.black87,
-                      decoration: isCompleted
+                      decoration: isCompletelyFinished
                           ? TextDecoration.lineThrough
                           : null,
                     ),
@@ -97,24 +123,50 @@ class MedicationReminderCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: screenWidth * 0.035,
                           color: Colors.grey.shade600,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '• Tap for details',
-                        style: TextStyle(
-                          fontSize: screenWidth * 0.03,
-                          color: Colors.blue.shade600,
-                          fontStyle: FontStyle.italic,
+                      if (doseDescription != null && doseDescription!.isNotEmpty) ...[
+                        Text(
+                          ' • $doseDescription',
+                          style: TextStyle(
+                            fontSize: screenWidth * 0.03,
+                            color: Colors.blue.shade600,
+                            fontStyle: FontStyle.italic,
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
+                  if (medication != null && medication!.durationInDays > 1) ...[
+                    SizedBox(height: screenWidth * 0.02),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: LinearProgressIndicator(
+                            value: medication!.completionPercentage,
+                            backgroundColor: Colors.grey.shade200,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              isCompletelyFinished ? Colors.green : Colors.blue,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: screenWidth * 0.02),
+                        Text(
+                          '${medication!.daysCompleted}/${medication!.durationInDays} days',
+                          style: TextStyle(
+                            fontSize: screenWidth * 0.03,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
             SizedBox(width: screenWidth * 0.02),
-            if (!isCompleted)
+            if (!isCompletelyFinished)
               GestureDetector(
                 onTap: onComplete,
                 child: Container(
@@ -123,11 +175,11 @@ class MedicationReminderCard extends StatelessWidget {
                     vertical: screenWidth * 0.015,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.blue,
+                    color: dateSpecificTaken ? Colors.green : Colors.blue,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    'Take',
+                    dateSpecificTaken ? 'Taken' : 'Take',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: screenWidth * 0.03,
@@ -137,14 +189,78 @@ class MedicationReminderCard extends StatelessWidget {
                 ),
               )
             else
-              Icon(
-                Icons.check_circle,
-                color: Colors.green,
-                size: screenWidth * 0.05,
+              Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: screenWidth * 0.03,
+                  vertical: screenWidth * 0.015,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.green,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.check_circle,
+                      color: Colors.white,
+                      size: screenWidth * 0.035,
+                    ),
+                    SizedBox(width: screenWidth * 0.01),
+                    Text(
+                      'Finished',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: screenWidth * 0.03,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
               ),
           ],
         ),
       ),
     );
+  }
+
+  // ✅ NEW: Get medication icon based on type (same as medication details screen)
+  IconData _getMedicationTypeIcon(String type) {
+    switch (type.toLowerCase()) {
+      case 'tablet':
+        return Icons.medication;
+      case 'capsule':
+        return Icons.medical_services;
+      case 'drop':
+        return Icons.water_drop;
+      case 'injection':
+        return Icons.vaccines;
+      case 'syrup':
+        return Icons.local_drink;
+      case 'inhaler':
+        return Icons.air;
+      default:
+        return Icons.medication;
+    }
+  }
+
+  // ✅ NEW: Get medication color based on type
+  Color _getMedicationTypeColor(String type) {
+    switch (type.toLowerCase()) {
+      case 'tablet':
+        return Colors.blue;
+      case 'capsule':
+        return Colors.green;
+      case 'drop':
+        return Colors.cyan;
+      case 'injection':
+        return Colors.red;
+      case 'syrup':
+        return Colors.orange;
+      case 'inhaler':
+        return Colors.purple;
+      default:
+        return Colors.blue;
+    }
   }
 }

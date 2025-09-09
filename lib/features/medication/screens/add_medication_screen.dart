@@ -18,6 +18,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
   TimeOfDay _selectedTime = const TimeOfDay(hour: 8, minute: 0);
   String _selectedType = 'Tablet';
   int _timesPerDay = 1;
+  int _durationInDays = 7; // ✅ NEW: Duration field
   bool _isLoading = false;
 
   final List<String> _medicineTypes = [
@@ -62,6 +63,8 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                 _buildTime(screenWidth),
                 SizedBox(height: screenHeight * 0.015),
                 _buildFrequency(screenWidth),
+                SizedBox(height: screenHeight * 0.015),
+                _buildDuration(screenWidth), // ✅ NEW: Duration section
                 SizedBox(height: screenHeight * 0.03),
                 _buildSaveButton(screenWidth),
                 SizedBox(height: screenHeight * 0.02),
@@ -460,6 +463,107 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
     );
   }
 
+  // ✅ NEW: Duration selection widget
+  Widget _buildDuration(double screenWidth) {
+    return Container(
+      padding: EdgeInsets.all(screenWidth * 0.04),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Treatment Duration',
+            style: TextStyle(
+              fontSize: screenWidth * 0.04,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: screenWidth * 0.02),
+          Text(
+            'How many days will you take this medication?',
+            style: TextStyle(
+              fontSize: screenWidth * 0.035,
+              color: Colors.grey.shade600,
+              height: 1.3,
+            ),
+          ),
+          SizedBox(height: screenWidth * 0.03),
+          Row(
+            children: [
+              Text(
+                'Duration: ',
+                style: TextStyle(fontSize: screenWidth * 0.04),
+              ),
+              Text(
+                '$_durationInDays days',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: screenWidth * 0.045,
+                  color: Colors.blue,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: screenWidth * 0.01),
+          Slider(
+            value: _durationInDays.toDouble(),
+            min: 1,
+            max: 30,
+            divisions: 29,
+            activeColor: Colors.blue,
+            onChanged: (value) {
+              setState(() {
+                _durationInDays = value.round();
+              });
+            },
+          ),
+          SizedBox(height: screenWidth * 0.01),
+          Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: screenWidth * 0.03,
+              vertical: screenWidth * 0.02,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.blue.shade200),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  color: Colors.blue,
+                  size: screenWidth * 0.04,
+                ),
+                SizedBox(width: screenWidth * 0.02),
+                Expanded(
+                  child: Text(
+                    _getDurationDescription(),
+                    style: TextStyle(
+                      fontSize: screenWidth * 0.032,
+                      color: Colors.blue.shade700,
+                      height: 1.2,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSaveButton(double screenWidth) {
     return SizedBox(
       width: double.infinity,
@@ -475,21 +579,21 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
         ),
         child: _isLoading
             ? SizedBox(
-                width: screenWidth * 0.05,
-                height: screenWidth * 0.05,
-                child: const CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-              )
+          width: screenWidth * 0.05,
+          height: screenWidth * 0.05,
+          child: const CircularProgressIndicator(
+            strokeWidth: 2,
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+          ),
+        )
             : Text(
-                'Add Medication',
-                style: TextStyle(
-                  fontSize: screenWidth * 0.04,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
+          'Add Medication',
+          style: TextStyle(
+            fontSize: screenWidth * 0.04,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
       ),
     );
   }
@@ -513,6 +617,23 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
     }
   }
 
+  // ✅ NEW: Duration description method
+  String _getDurationDescription() {
+    if (_durationInDays == 1) {
+      return 'Single dose medication';
+    } else if (_durationInDays <= 3) {
+      return 'Short-term treatment ($_durationInDays days)';
+    } else if (_durationInDays <= 7) {
+      return 'One week treatment course';
+    } else if (_durationInDays <= 14) {
+      return 'Two-week treatment course';
+    } else if (_durationInDays <= 21) {
+      return 'Three-week treatment course';
+    } else {
+      return 'Long-term treatment ($_durationInDays days)';
+    }
+  }
+
   void _selectTime() async {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
@@ -524,9 +645,6 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
       });
     }
   }
-
-  // Removed unused _requestNotificationPermissions, handled inline in save
-
   void _saveMedication() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
@@ -539,23 +657,24 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text(
-                  'Please enable notifications to receive reminders.',
-                ),
+                content: Text('Please enable notifications to receive reminders.'),
                 backgroundColor: Colors.orange,
               ),
             );
           }
         }
 
+        // ✅ UPDATED: Create medication with proper scheduling
         final medication = Medication(
-          id: 'temp', // Temporary ID, will be replaced by controller
+          id: 'temp',
           name: _nameController.text.trim(),
           dosage: _dosageController.text.trim(),
           time: _selectedTime.format(context),
           type: _selectedType,
           timesPerDay: _timesPerDay,
-          nextDoseTime: DateTime.now().add(const Duration(hours: 1)),
+          durationInDays: _durationInDays,
+          startDate: DateTime.now(),
+          nextDoseTime: DateTime.now(),
         );
 
         await context.read<MedicationController>().addMedication(medication);
@@ -564,35 +683,25 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                '${medication.name} added successfully! You\'ll get $_timesPerDay reminder${_timesPerDay > 1 ? 's' : ''} daily.',
+                '${medication.name} added! You\'ll receive reminders at ${_selectedTime.format(context)} for $_durationInDays days.',
               ),
               backgroundColor: Colors.green,
               behavior: SnackBarBehavior.floating,
-              duration: const Duration(seconds: 4),
+              duration: const Duration(seconds: 5),
               action: SnackBarAction(
-                label: 'Test',
+                label: 'Test Now', // ✅ CHANGED: Make it optional
                 textColor: Colors.white,
                 onPressed: () {
-                  final addedMedication = context
-                      .read<MedicationController>()
-                      .medications
-                      .last;
-                  context.read<MedicationController>().testNotification(
-                    addedMedication.id,
-                  );
+                  // ✅ OPTIONAL: Only send test if user taps "Test Now"
+                  final addedMedication = context.read<MedicationController>().medications.last;
+                  context.read<MedicationController>().testNotification(addedMedication.id);
                 },
               ),
             ),
           );
 
-          // Immediately send a test notification once added so user sees it works
-          final addedMedication = context
-              .read<MedicationController>()
-              .medications
-              .last;
-          await context.read<MedicationController>().testNotification(
-            addedMedication.id,
-          );
+          // ✅ REMOVED: No automatic test notification
+          // The notifications are now properly scheduled for the selected time
 
           Navigator.pop(context);
         }
@@ -615,6 +724,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
       }
     }
   }
+
 
   @override
   void dispose() {
