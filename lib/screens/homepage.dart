@@ -206,17 +206,25 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
               ],
             ),
           ),
-          Container(
-            width: screenWidth * 0.15,
-            height: screenWidth * 0.15,
-            decoration: BoxDecoration(
-              color: Colors.blue.shade100,
-              borderRadius: BorderRadius.circular(screenWidth * 0.075),
-            ),
-            child: Icon(
-              Icons.person,
-              size: screenWidth * 0.08,
-              color: Colors.blue,
+          // MODIFIED: Make the profile icon navigate to the profile page
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                _selectedIndex = 3;
+              });
+            },
+            child: Container(
+              width: screenWidth * 0.15,
+              height: screenWidth * 0.15,
+              decoration: BoxDecoration(
+                color: Colors.blue.shade100,
+                borderRadius: BorderRadius.circular(screenWidth * 0.075),
+              ),
+              child: Icon(
+                Icons.person,
+                size: screenWidth * 0.08,
+                color: Colors.blue,
+              ),
             ),
           ),
         ],
@@ -738,14 +746,21 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
       backgroundColor: Colors.white,
       type: BottomNavigationBarType.fixed,
       currentIndex: _selectedIndex,
-      onTap: (index) => setState(() => _selectedIndex = index),
+      onTap: (index) {
+        if (index == 3) { // MODIFIED: Check for the settings icon index
+          _navigateToSettings(); // MODIFIED: Navigate to settings
+        } else {
+          setState(() => _selectedIndex = index);
+        }
+      },
       selectedItemColor: Color(0xff0284C7),
       unselectedItemColor: Colors.grey,
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
         BottomNavigationBarItem(icon: Icon(Icons.medication), label: 'Medications'),
         BottomNavigationBarItem(icon: Icon(Icons.emergency), label: 'SOS'),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+        // MODIFIED: Change profile icon and label to settings
+        BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
       ],
     );
   }

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'dart:async';
 
 class SOSScreen extends StatefulWidget {
   const SOSScreen({super.key});
@@ -12,15 +15,26 @@ class _SOSScreenState extends State<SOSScreen> with TickerProviderStateMixin {
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
   bool _isPressed = false;
+  Timer? _longPressTimer;
+  Position? _currentPosition;
+  String _currentLocationMessage = 'Getting your location...';
 
   // Emergency contacts list
-  List<EmergencyContact> _emergencyContacts = [
+  final List<EmergencyContact> _emergencyContacts = [
     EmergencyContact(
       name: 'Emergency Services',
-      number: '123', // Egypt emergency number
-      icon: Icons.local_hospital,
+      number: '123',
+      relationship: 'Emergency',
       isDefault: true,
     ),
+  ];
+
+  final List<String> _relationships = [
+    'Family',
+    'Friend',
+    'Doctor',
+    'Hospital',
+    'Other'
   ];
 
   @override
@@ -39,18 +53,180 @@ class _SOSScreenState extends State<SOSScreen> with TickerProviderStateMixin {
     ));
 
     _pulseController.repeat(reverse: true);
+    _getCurrentLocation();
   }
 
   @override
   void dispose() {
     _pulseController.dispose();
+    _longPressTimer?.cancel();
     super.dispose();
+  }
+
+  Future<void> _getCurrentLocation() async {
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        _updateLocationMessage('Location permissions are denied.');
+        return;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      _updateLocationMessage('Location permissions are permanently denied.');
+      return;
+    }
+
+    try {
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+      setState(() {
+        _currentPosition = position;
+        _currentLocationMessage =
+        'Location: Lat ${position.latitude.toStringAsFixed(4)}, Lon ${position.longitude.toStringAsFixed(4)}';
+      });
+    } catch (e) {
+      _updateLocationMessage('Failed to get location: ${e.toString()}');
+    }
+  }
+
+  void _updateLocationMessage(String message) {
+    setState(() {
+      _currentLocationMessage = message;
+    });
+  }
+
+  void _startSOSSequence() {
+    setState(() {
+      _isPressed = true;
+    });
+    HapticFeedback.heavyImpact();
+
+    _longPressTimer = Timer(const Duration(seconds: 2), () {
+      if (_isPressed) {
+        _triggerSOS();
+      }
+    });
+  }
+
+  void _cancelSOSSequence() {
+    _longPressTimer?.cancel();
+    setState(() {
+      _isPressed = false;
+    });
+  }
+
+  Future<void> _triggerSOS() async {
+    _longPressTimer?.cancel();
+    setState(() {
+      _isPressed = false;
+    });
+
+    final locationLink = _currentPosition != null
+        ? 'http://maps.google.com/maps?q=${_currentPosition!.latitude},${_currentPosition!.longitude}'
+        : 'Location unavailable';
+
+    final contactsToSend =
+    _emergencyContacts.where((c) => !c.isDefault).toList();
+
+    for (var contact in contactsToSend) {
+      final message =
+          'EMERGENCY ALERT: I need immediate help. My last known location is: $locationLink';
+      final Uri uri = Uri.parse(
+          'sms:${contact.number}?body=${Uri.encodeComponent(message)}');
+      await launchUrl(uri);
+    }
+
+    _showSOSDialog(contactsToSend, locationLink);
+  }
+
+  Future<void> _callContact(String number) async {
+    final Uri phoneUri = Uri.parse('tel:$number');
+    if (await canLaunchUrl(phoneUri)) {
+      await launchUrl(phoneUri);
+    } else {
+      _showAlertDialog('Could not open phone dialer',
+          'Failed to launch the call app for $number.');
+    }
+  }
+
+  void _showSOSDialog(List<EmergencyContact> contacts, String locationLink) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber, color: Colors.red, size: 30),
+            SizedBox(width: 10),
+            Text('SOS Alert Sent!',
+                style: TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: ListBody(
+            children: [
+              const Text(
+                'An emergency alert with your location has been sent to your trusted contacts.',
+                style: TextStyle(fontSize: 16),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Location Sent:',
+                style: TextStyle(
+                    fontWeight: FontWeight.bold, color: Colors.grey),
+              ),
+              const SizedBox(height: 5),
+              Text(locationLink, style: const TextStyle(fontSize: 14)),
+              const SizedBox(height: 20),
+              Text(
+                'Notified Contacts:',
+                style: TextStyle(
+                    fontWeight: FontWeight.bold, color: Colors.grey),
+              ),
+              ...contacts
+                  .map((c) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Text('• ${c.name} (${c.relationship})',
+                    style: const TextStyle(fontSize: 14)),
+              ))
+                  .toList(),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK', style: TextStyle(color: Colors.blue)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAlertDialog(String title, String content) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: Text(content),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.red.shade50,
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
@@ -58,12 +234,12 @@ class _SOSScreenState extends State<SOSScreen> with TickerProviderStateMixin {
             children: [
               _buildHeader(),
               const SizedBox(height: 30),
-              _buildInstructions(),
+              _buildLocationInfo(),
               const SizedBox(height: 40),
               _buildSOSButton(),
               const SizedBox(height: 40),
               _buildEmergencyContacts(),
-              const SizedBox(height: 100), // Space for bottom nav
+              const SizedBox(height: 100),
             ],
           ),
         ),
@@ -75,9 +251,9 @@ class _SOSScreenState extends State<SOSScreen> with TickerProviderStateMixin {
     return Column(
       children: [
         Icon(
-          Icons.emergency,
+          Icons.health_and_safety,
           size: 60,
-          color: Colors.red.shade600,
+          color: Colors.blue.shade600,
         ),
         const SizedBox(height: 16),
         const Text(
@@ -90,7 +266,7 @@ class _SOSScreenState extends State<SOSScreen> with TickerProviderStateMixin {
         ),
         const SizedBox(height: 8),
         Text(
-          'Press and hold the button below for emergency help',
+          'Press and hold the button below for a quick emergency alert',
           style: TextStyle(
             fontSize: 16,
             color: Colors.grey.shade600,
@@ -101,43 +277,27 @@ class _SOSScreenState extends State<SOSScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildInstructions() {
+  Widget _buildLocationInfo() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.orange.shade50,
+        color: Colors.blue.shade50,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.orange.shade200),
+        border: Border.all(color: Colors.blue.shade200),
       ),
-      child: Column(
+      child: Row(
         children: [
-          Row(
-            children: [
-              Icon(Icons.info_outline, color: Colors.orange.shade600),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Text(
-                  'How to use SOS',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+          Icon(Icons.location_on, color: Colors.blue.shade700, size: 24),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              _currentLocationMessage,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.blue.shade700,
               ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('• Hold the button for 3 seconds'),
-              SizedBox(height: 4),
-              Text('• Your location will be sent to emergency contacts'),
-              SizedBox(height: 4),
-              Text('• Emergency services (123) will be contacted'),
-              SizedBox(height: 4),
-              Text('• A loud alarm will sound to alert nearby people'),
-            ],
+            ),
           ),
         ],
       ),
@@ -180,17 +340,17 @@ class _SOSScreenState extends State<SOSScreen> with TickerProviderStateMixin {
                 child: InkWell(
                   borderRadius: BorderRadius.circular(100),
                   onTap: () {},
-                  child: const Center(
+                  child: Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.emergency,
                           size: 50,
                           color: Colors.white,
                         ),
-                        SizedBox(height: 8),
-                        Text(
+                        const SizedBox(height: 8),
+                        const Text(
                           'SOS',
                           style: TextStyle(
                             color: Colors.white,
@@ -199,10 +359,10 @@ class _SOSScreenState extends State<SOSScreen> with TickerProviderStateMixin {
                             letterSpacing: 2,
                           ),
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         Text(
-                          'HOLD',
-                          style: TextStyle(
+                          _isPressed ? 'Releasing in 2s' : 'HOLD FOR 2 SECONDS',
+                          style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
@@ -250,29 +410,32 @@ class _SOSScreenState extends State<SOSScreen> with TickerProviderStateMixin {
                   ),
                 ),
               ),
-              // Add Contact Button
-              ElevatedButton.icon(
-                onPressed: _showAddContactDialog,
-                icon: const Icon(Icons.add, size: 16),
-                label: const Text('Add', style: TextStyle(fontSize: 12)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  minimumSize: const Size(60, 30),
+              Spacer(flex: 1,),
+              Flexible(
+                child: ElevatedButton.icon(
+                  onPressed: _showAddContactDialog,
+                  icon: const Icon(Icons.add, size: 16, color: Colors.white),
+                  label: const Text('Add',
+                      style: TextStyle(fontSize: 12, color: Colors.white)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    minimumSize: const Size(70, 36),
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-
-          // List of emergency contacts
-          ..._emergencyContacts.map((contact) => Padding(
+          const SizedBox(height: 20),
+          ..._emergencyContacts
+              .map((contact) => Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: _buildContactItem(contact),
-          )).toList(),
-
-          // Show message if no custom contacts added
+          ))
+              .toList(),
           if (_emergencyContacts.length == 1)
             Container(
               padding: const EdgeInsets.all(16),
@@ -282,11 +445,12 @@ class _SOSScreenState extends State<SOSScreen> with TickerProviderStateMixin {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.info_outline, color: Colors.grey.shade600, size: 20),
+                  Icon(Icons.info_outline,
+                      color: Colors.grey.shade600, size: 20),
                   const SizedBox(width: 12),
-                  Expanded(
+                  Flexible(
                     child: Text(
-                      'Add family members or friends to your emergency contacts',
+                      'Add family, friends, or doctors to your emergency contacts.',
                       style: TextStyle(
                         color: Colors.grey.shade600,
                         fontSize: 14,
@@ -303,10 +467,10 @@ class _SOSScreenState extends State<SOSScreen> with TickerProviderStateMixin {
 
   Widget _buildContactItem(EmergencyContact contact) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: contact.isDefault ? Colors.red.shade50 : Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: contact.isDefault ? Colors.red.shade200 : Colors.grey.shade200,
         ),
@@ -314,11 +478,11 @@ class _SOSScreenState extends State<SOSScreen> with TickerProviderStateMixin {
       child: Row(
         children: [
           Icon(
-            contact.icon,
-            size: 20,
-            color: contact.isDefault ? Colors.red.shade600 : Colors.grey.shade600,
+            _getRelationshipIcon(contact.relationship),
+            size: 24,
+            color: contact.isDefault ? Colors.red.shade600 : Colors.blue,
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -326,16 +490,16 @@ class _SOSScreenState extends State<SOSScreen> with TickerProviderStateMixin {
                 Text(
                   contact.name,
                   style: const TextStyle(
-                    fontWeight: FontWeight.w500,
-                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 4),
                 Text(
-                  contact.number,
+                  '${contact.number} (${contact.relationship})',
                   style: TextStyle(
                     color: Colors.grey.shade600,
-                    fontSize: 12,
+                    fontSize: 14,
                   ),
                 ),
               ],
@@ -344,19 +508,49 @@ class _SOSScreenState extends State<SOSScreen> with TickerProviderStateMixin {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              IconButton(
-                onPressed: () => _callContact(contact.number),
-                icon: const Icon(Icons.call, color: Colors.green, size: 18),
-                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                padding: EdgeInsets.zero,
-              ),
-              if (!contact.isDefault)
+              if (contact.isDefault)
                 IconButton(
-                  onPressed: () => _deleteContact(contact),
-                  icon: const Icon(Icons.delete, color: Colors.red, size: 18),
-                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                  onPressed: () => _callContact(contact.number),
+                  icon: const Icon(Icons.call, color: Colors.green, size: 22),
+                  constraints:
+                  const BoxConstraints(minWidth: 40, minHeight: 40),
                   padding: EdgeInsets.zero,
+                  tooltip: 'Call ${contact.name}',
+                )
+              else ...[
+                IconButton(
+                  onPressed: () {
+                    final message =
+                        'EMERGENCY ALERT: I need immediate help. My last known location is not available.';
+                    launchUrl(Uri.parse(
+                        'sms:${contact.number}?body=${Uri.encodeComponent(message)}'));
+                  },
+                  icon: const Icon(Icons.send, color: Colors.blue, size: 22),
+                  constraints:
+                  const BoxConstraints(minWidth: 40, minHeight: 40),
+                  padding: EdgeInsets.zero,
+                  tooltip: 'Send SMS to ${contact.name}',
                 ),
+                IconButton(
+                  onPressed: () => _callContact(contact.number),
+                  icon: const Icon(Icons.call, color: Colors.green, size: 22),
+                  constraints:
+                  const BoxConstraints(minWidth: 40, minHeight: 40),
+                  padding: EdgeInsets.zero,
+                  tooltip: 'Call ${contact.name}',
+                ),
+                SizedBox(
+                  height: 40,
+                  width: 40,
+                  child: IconButton(
+                    onPressed: () => _deleteContact(contact),
+                    icon: const Icon(Icons.delete,
+                        color: Colors.red, size: 22),
+                    tooltip: 'Delete ${contact.name}',
+                    padding: EdgeInsets.zero,
+                  ),
+                ),
+              ],
             ],
           ),
         ],
@@ -364,118 +558,76 @@ class _SOSScreenState extends State<SOSScreen> with TickerProviderStateMixin {
     );
   }
 
-  void _startSOSSequence() {
-    setState(() {
-      _isPressed = true;
-    });
-
-    HapticFeedback.heavyImpact();
-
-    Future.delayed(const Duration(seconds: 3), () {
-      if (_isPressed) {
-        _triggerSOS();
-      }
-    });
-  }
-
-  void _cancelSOSSequence() {
-    setState(() {
-      _isPressed = false;
-    });
-  }
-
-  void _triggerSOS() {
-    setState(() {
-      _isPressed = false;
-    });
-
-    // Create contacts list for the alert
-    String contactsList = _emergencyContacts.map((contact) =>
-    '• ${contact.name}: ${contact.number}'
-    ).join('\n');
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: const Row(
-          children: [
-            Icon(Icons.emergency, color: Colors.red),
-            SizedBox(width: 8),
-            Text('SOS ACTIVATED'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Emergency alert has been sent!\n',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const Text('✓ Location shared with contacts'),
-            const Text('✓ Emergency services (123) notified'),
-            const Text('✓ Alarm activated'),
-            const SizedBox(height: 16),
-            const Text('Contacts notified:', style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Text(contactsList, style: const TextStyle(fontSize: 12)),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _cancelSOS();
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Cancel SOS', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
+  IconData _getRelationshipIcon(String relationship) {
+    switch (relationship) {
+      case 'Family':
+        return Icons.family_restroom;
+      case 'Friend':
+        return Icons.person;
+      case 'Doctor':
+        return Icons.medical_services;
+      case 'Hospital':
+        return Icons.local_hospital;
+      default:
+        return Icons.person_outline;
+    }
   }
 
   void _showAddContactDialog() {
     final nameController = TextEditingController();
     final numberController = TextEditingController();
+    String? selectedRelationship = _relationships.first;
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Row(
-          children: [
-            Icon(Icons.person_add, color: Colors.blue),
-            SizedBox(width: 8),
-            Text('Add Emergency Contact'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: 'Contact Name',
-                hintText: 'e.g., Mom, Dad, Friend',
-                prefixIcon: Icon(Icons.person),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: numberController,
-              keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(
-                labelText: 'Phone Number',
-                hintText: 'e.g., +20 123 456 7890',
-                prefixIcon: Icon(Icons.phone),
-              ),
-            ),
-          ],
+        title: const Text('Add Emergency Contact'),
+        content: StatefulBuilder(
+          builder: (context, setState) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Contact Name',
+                    hintText: 'e.g., Mom',
+                    prefixIcon: Icon(Icons.person),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: numberController,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(
+                    labelText: 'Phone Number',
+                    hintText: 'e.g., +20 123 456 7890',
+                    prefixIcon: Icon(Icons.phone),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: selectedRelationship,
+                  decoration: const InputDecoration(
+                    labelText: 'Relationship',
+                    prefixIcon: Icon(Icons.group),
+                    border: OutlineInputBorder(),
+                  ),
+                  items: _relationships.map((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      selectedRelationship = newValue;
+                    });
+                  },
+                ),
+              ],
+            );
+          },
         ),
         actions: [
           TextButton(
@@ -486,7 +638,11 @@ class _SOSScreenState extends State<SOSScreen> with TickerProviderStateMixin {
             onPressed: () {
               if (nameController.text.trim().isNotEmpty &&
                   numberController.text.trim().isNotEmpty) {
-                _addContact(nameController.text.trim(), numberController.text.trim());
+                _addContact(
+                  nameController.text.trim(),
+                  numberController.text.trim(),
+                  selectedRelationship!,
+                );
                 Navigator.pop(context);
               }
             },
@@ -497,12 +653,12 @@ class _SOSScreenState extends State<SOSScreen> with TickerProviderStateMixin {
     );
   }
 
-  void _addContact(String name, String number) {
+  void _addContact(String name, String number, String relationship) {
     setState(() {
       _emergencyContacts.add(EmergencyContact(
         name: name,
         number: number,
-        icon: Icons.person,
+        relationship: relationship,
         isDefault: false,
       ));
     });
@@ -521,7 +677,8 @@ class _SOSScreenState extends State<SOSScreen> with TickerProviderStateMixin {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Contact'),
-        content: Text('Are you sure you want to remove ${contact.name} from emergency contacts?'),
+        content: Text(
+            'Are you sure you want to remove ${contact.name} from emergency contacts?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -547,38 +704,18 @@ class _SOSScreenState extends State<SOSScreen> with TickerProviderStateMixin {
       ),
     );
   }
-
-  void _cancelSOS() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('SOS alert cancelled'),
-        backgroundColor: Colors.orange,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-
-  void _callContact(String number) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Calling $number...'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
 }
 
-// Emergency Contact Model
 class EmergencyContact {
   final String name;
   final String number;
-  final IconData icon;
+  final String relationship;
   final bool isDefault;
 
   EmergencyContact({
     required this.name,
     required this.number,
-    required this.icon,
+    required this.relationship,
     this.isDefault = false,
   });
 }

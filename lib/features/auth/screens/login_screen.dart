@@ -50,7 +50,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 // Subtitle
                 const Text(
-                  'Sign in to continue to Awan',
+                  'Sign in to continue to 3wan',
                   style: TextStyle(fontSize: 16, color: Colors.grey),
                   textAlign: TextAlign.center,
                 ),

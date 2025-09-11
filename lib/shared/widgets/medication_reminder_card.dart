@@ -12,6 +12,7 @@ class MedicationReminderCard extends StatelessWidget {
   final Medication? medication;
   final DateTime? selectedDate;
   final int? doseNumber;
+  final bool isInMedicationScreen;
 
   const MedicationReminderCard({
     super.key,
@@ -24,6 +25,7 @@ class MedicationReminderCard extends StatelessWidget {
     this.medication,
     this.selectedDate,
     this.doseNumber,
+    this.isInMedicationScreen = false,
   });
 
   @override
@@ -80,7 +82,7 @@ class MedicationReminderCard extends StatelessWidget {
                     ? Colors.green.withOpacity(0.1)
                     : dateSpecificTaken
                     ? Colors.blue.withOpacity(0.1)
-                    : _getMedicationTypeColor(medication?.type ?? 'Tablet').withOpacity(0.1), // ✅ UPDATED: Dynamic color
+                    : _getMedicationTypeColor(medication?.type ?? 'Tablet').withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
@@ -88,12 +90,12 @@ class MedicationReminderCard extends StatelessWidget {
                     ? Icons.check_circle
                     : dateSpecificTaken
                     ? Icons.check_circle_outline
-                    : _getMedicationTypeIcon(medication?.type ?? 'Tablet'), // ✅ UPDATED: Dynamic icon
+                    : _getMedicationTypeIcon(medication?.type ?? 'Tablet'),
                 color: isCompletelyFinished
                     ? Colors.green
                     : dateSpecificTaken
                     ? Colors.blue
-                    : _getMedicationTypeColor(medication?.type ?? 'Tablet'), // ✅ UPDATED: Dynamic color
+                    : _getMedicationTypeColor(medication?.type ?? 'Tablet'),
                 size: screenWidth * 0.06,
               ),
             ),
@@ -166,9 +168,11 @@ class MedicationReminderCard extends StatelessWidget {
               ),
             ),
             SizedBox(width: screenWidth * 0.02),
+
+            // ✅ FIXED: Working button with proper functionality
             if (!isCompletelyFinished)
               GestureDetector(
-                onTap: onComplete,
+                onTap: onComplete, // ✅ FIXED: This MUST be called to work!
                 child: Container(
                   padding: EdgeInsets.symmetric(
                     horizontal: screenWidth * 0.03,
@@ -179,7 +183,7 @@ class MedicationReminderCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    dateSpecificTaken ? 'Taken' : 'Take',
+                    _getButtonText(dateSpecificTaken),
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: screenWidth * 0.03,
@@ -224,7 +228,16 @@ class MedicationReminderCard extends StatelessWidget {
     );
   }
 
-  // ✅ NEW: Get medication icon based on type (same as medication details screen)
+  // ✅ FIXED: Proper button text logic
+  String _getButtonText(bool dateSpecificTaken) {
+    if (dateSpecificTaken) {
+      return 'Taken'; // Always show "Taken" when completed
+    }
+
+    // Show "In Progress" in medication screen, "Take" in home screen
+    return isInMedicationScreen ? 'In Progress' : 'Take';
+  }
+
   IconData _getMedicationTypeIcon(String type) {
     switch (type.toLowerCase()) {
       case 'tablet':
@@ -244,7 +257,6 @@ class MedicationReminderCard extends StatelessWidget {
     }
   }
 
-  // ✅ NEW: Get medication color based on type
   Color _getMedicationTypeColor(String type) {
     switch (type.toLowerCase()) {
       case 'tablet':

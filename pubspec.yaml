@@ -45,7 +45,8 @@ dependencies:
   permission_handler: ^11.3.1
   date_picker_timeline: ^1.2.7
   persistent_bottom_nav_bar: ^6.2.1
-
+  url_launcher: ^6.3.0
+  geolocator: ^14.0.2
 dev_dependencies:
   flutter_test:
     sdk: flutter

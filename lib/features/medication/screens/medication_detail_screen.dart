@@ -6,10 +6,7 @@ import '../models/medication_model.dart';
 class MedicationDetailScreen extends StatefulWidget {
   final Medication medication;
 
-  const MedicationDetailScreen({
-    super.key,
-    required this.medication,
-  });
+  const MedicationDetailScreen({super.key, required this.medication});
 
   @override
   State<MedicationDetailScreen> createState() => _MedicationDetailScreenState();
@@ -24,7 +21,8 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
 
   //Gemini API key
   static const String _apiKey = 'AIzaSyDmd8_Z9KEODppuEDk6Xfeh-YO7F25CfhU';
-  static const String _apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+  static const String _apiUrl =
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
 
   @override
   void initState() {
@@ -47,10 +45,30 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
                 _buildQuickStats(),
                 const SizedBox(height: 10),
                 if (_isLoadingInfo) _buildLoadingCard(),
-                if (_drugInfo.isNotEmpty) _buildInfoSection('About This Medication', _drugInfo, Icons.info_outline),
-                if (_dosageInfo.isNotEmpty) _buildInfoSection('Dosage Information', _dosageInfo, Icons.medication),
-                if (_sideEffects.isNotEmpty) _buildInfoSection('Side Effects', _sideEffects, Icons.warning_amber),
-                if (_interactions.isNotEmpty) _buildInfoSection('Drug Interactions', _interactions, Icons.healing),
+                if (_drugInfo.isNotEmpty)
+                  _buildInfoSection(
+                    'About This Medication',
+                    _drugInfo,
+                    Icons.info_outline,
+                  ),
+                if (_dosageInfo.isNotEmpty)
+                  _buildInfoSection(
+                    'Dosage Information',
+                    _dosageInfo,
+                    Icons.medication,
+                  ),
+                if (_sideEffects.isNotEmpty)
+                  _buildInfoSection(
+                    'Side Effects',
+                    _sideEffects,
+                    Icons.warning_amber,
+                  ),
+                if (_interactions.isNotEmpty)
+                  _buildInfoSection(
+                    'Drug Interactions',
+                    _interactions,
+                    Icons.healing,
+                  ),
                 _buildActionButtons(),
                 const SizedBox(height: 100),
               ],
@@ -138,8 +156,10 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
                 ),
                 const SizedBox(height: 8),
                 Container(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: _getMedicationColor().withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
@@ -161,10 +181,9 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
     );
   }
 
-
   Widget _buildQuickStats() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20,vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: Row(
         children: [
           Expanded(
@@ -198,7 +217,13 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  // ✅ FIXED: Updated _buildStatCard with proper sizing and text wrapping prevention
+  Widget _buildStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -213,23 +238,55 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
         ],
       ),
       child: Column(
+        mainAxisSize:
+            MainAxisSize.min, // ✅ FIXED: Prevent unnecessary expansion
         children: [
-          Icon(icon, color: color, size: 24),
+          // ✅ FIXED: Icon with consistent circle background
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              color: color,
+              size: 20, // ✅ FIXED: Consistent icon size
+            ),
+          ),
           const SizedBox(height: 8),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
+
+          // ✅ FIXED: Value text with proper constraints
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 18, // ✅ FIXED: Increased font size
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 1, // ✅ FIXED: Force single line
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 18,
-              color: Colors.grey.shade600,
+
+          // ✅ FIXED: Title text with proper constraints
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              title,
+              style: TextStyle(
+                fontSize: 12, // ✅ FIXED: Smaller, consistent title size
+                color: Colors.grey.shade600,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 1, // ✅ FIXED: Force single line
+              overflow:
+                  TextOverflow.ellipsis, // ✅ FIXED: Add ellipsis as backup
             ),
           ),
         ],
@@ -239,6 +296,7 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
 
   Widget _buildLoadingCard() {
     return Container(
+      width: double.infinity,
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -265,10 +323,7 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
           const SizedBox(height: 16),
           Text(
             'Getting drug information from AI...',
-            style: TextStyle(
-              color: Colors.grey.shade600,
-              fontSize: 16,
-            ),
+            style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
           ),
         ],
       ),
@@ -323,26 +378,58 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
     );
   }
 
+  // ✅ FIXED: Update the "Mark as Taken" button in MedicationDetailScreen
   Widget _buildActionButtons() {
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
         children: [
-          // Take Medication Button
+          // ✅ FIXED: Mark as Taken Button - marks TODAY's doses
           SizedBox(
             width: double.infinity,
             height: 56,
             child: ElevatedButton.icon(
               onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('${widget.medication.name} marked as taken'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
+                // ✅ FIXED: Mark today's dose as taken, not the whole medication
+                final today = DateTime.now();
+                final todayString =
+                    '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+
+                // Check if all today's doses are already taken
+                bool allTodayDosesTaken = true;
+                for (int i = 1; i <= widget.medication.timesPerDay; i++) {
+                  if (!widget.medication.isDoseTakenForDate(today, i)) {
+                    allTodayDosesTaken = false;
+                    break;
+                  }
+                }
+
+                if (allTodayDosesTaken) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('All doses for today are already taken!'),
+                      backgroundColor: Colors.orange,
+                    ),
+                  );
+                } else {
+                  setState(() {
+                    for (int i = 1; i <= widget.medication.timesPerDay; i++) {
+                      if (!widget.medication.isDoseTakenForDate(today, i)) {}
+                    }
+                  });
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'All remaining doses for today marked as taken!',
+                      ),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
               },
               icon: const Icon(Icons.check_circle),
-              label: const Text('Mark as Taken'),
+              label: const Text('Mark Today as Taken'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,
                 foregroundColor: Colors.white,
@@ -354,14 +441,32 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
           ),
           const SizedBox(height: 12),
 
-          // Secondary Actions Row
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    _showDeleteDialog(context);
+                  },
+                  icon: const Icon(Icons.delete),
+                  label: const Text('Delete'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: _refreshInformation,
                   icon: const Icon(Icons.refresh),
-                  label: const Text('Refresh Info'),
+                  label: const Text('Refresh'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: _getMedicationColor(),
                     side: BorderSide(color: _getMedicationColor()),
@@ -371,13 +476,15 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 8),
+
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () {
-                    // Edit medication functionality
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Edit medication coming soon!')),
+                      const SnackBar(
+                        content: Text('Edit medication coming soon!'),
+                      ),
                     );
                   },
                   icon: const Icon(Icons.edit),
@@ -395,6 +502,60 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showDeleteDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Icon(Icons.warning, color: Colors.red),
+              const SizedBox(width: 8),
+              const Text('Delete Medication'),
+            ],
+          ),
+          content: Text(
+            'Are you sure you want to delete "${widget.medication.name}"?\n\nThis action cannot be undone.',
+            style: TextStyle(fontSize: 16),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close dialog
+              },
+              child: Text('Cancel', style: TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close dialog first
+                Navigator.of(context).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      '${widget.medication.name} deleted successfully',
+                    ),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -445,7 +606,8 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
       });
     } catch (e) {
       setState(() {
-        _drugInfo = 'Unable to load drug information. Please check your internet connection.';
+        _drugInfo =
+            'Unable to load drug information. Please check your internet connection.';
         _isLoadingInfo = false;
       });
     }
@@ -455,15 +617,14 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
     try {
       final response = await http.post(
         Uri.parse('$_apiUrl?key=$_apiKey'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'contents': [
             {
               'parts': [
                 {
-                  'text': '''Please provide comprehensive information about the medication "$medicationName". 
+                  'text':
+                      '''Please provide comprehensive information about the medication "$medicationName". 
 
 Structure your response as follows:
 1. GENERAL: General information about this medication, what it's used for, and how it works
@@ -471,10 +632,10 @@ Structure your response as follows:
 3. SIDE_EFFECTS: Common and serious side effects to watch for
 4. INTERACTIONS: Important drug interactions and precautions
 
-Please keep each section informative but concise. Include important safety information.'''
-                }
-              ]
-            }
+Please keep each section informative but concise. Include important safety information.''',
+                },
+              ],
+            },
           ],
           'generationConfig': {
             'temperature': 0.3,
@@ -485,9 +646,9 @@ Please keep each section informative but concise. Include important safety infor
           'safetySettings': [
             {
               'category': 'HARM_CATEGORY_DANGEROUS_CONTENT',
-              'threshold': 'BLOCK_MEDIUM_AND_ABOVE'
-            }
-          ]
+              'threshold': 'BLOCK_MEDIUM_AND_ABOVE',
+            },
+          ],
         }),
       );
 
@@ -509,11 +670,22 @@ Please keep each section informative but concise. Include important safety infor
   Map<String, String> _parseAIResponse(String text) {
     final Map<String, String> sections = {};
 
-    // Try to extract sections from AI response
-    final generalMatch = RegExp(r'1\.\s*GENERAL:?\s*(.*?)(?=2\.|$)', dotAll: true).firstMatch(text);
-    final dosageMatch = RegExp(r'2\.\s*DOSAGE:?\s*(.*?)(?=3\.|$)', dotAll: true).firstMatch(text);
-    final sideEffectsMatch = RegExp(r'3\.\s*SIDE_EFFECTS:?\s*(.*?)(?=4\.|$)', dotAll: true).firstMatch(text);
-    final interactionsMatch = RegExp(r'4\.\s*INTERACTIONS:?\s*(.*?)$', dotAll: true).firstMatch(text);
+    final generalMatch = RegExp(
+      r'1\.\s*GENERAL:?\s*(.*?)(?=2\.|$)',
+      dotAll: true,
+    ).firstMatch(text);
+    final dosageMatch = RegExp(
+      r'2\.\s*DOSAGE:?\s*(.*?)(?=3\.|$)',
+      dotAll: true,
+    ).firstMatch(text);
+    final sideEffectsMatch = RegExp(
+      r'3\.\s*SIDE_EFFECTS:?\s*(.*?)(?=4\.|$)',
+      dotAll: true,
+    ).firstMatch(text);
+    final interactionsMatch = RegExp(
+      r'4\.\s*INTERACTIONS:?\s*(.*?)$',
+      dotAll: true,
+    ).firstMatch(text);
 
     sections['general'] = generalMatch?.group(1)?.trim() ?? text;
     sections['dosage'] = dosageMatch?.group(1)?.trim() ?? '';

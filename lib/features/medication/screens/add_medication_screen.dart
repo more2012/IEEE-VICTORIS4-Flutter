@@ -298,7 +298,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
           TextFormField(
             controller: _dosageController,
             decoration: InputDecoration(
-              hintText: 'e.g., 100mg',
+              hintText: 'e.g.,100mg',
               filled: true,
               fillColor: Colors.grey.shade50,
               border: OutlineInputBorder(
@@ -463,7 +463,6 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
     );
   }
 
-  // ✅ NEW: Duration selection widget
   Widget _buildDuration(double screenWidth) {
     return Container(
       padding: EdgeInsets.all(screenWidth * 0.04),
@@ -617,7 +616,6 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
     }
   }
 
-  // ✅ NEW: Duration description method
   String _getDurationDescription() {
     if (_durationInDays == 1) {
       return 'Single dose medication';
@@ -664,7 +662,6 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
           }
         }
 
-        // ✅ UPDATED: Create medication with proper scheduling
         final medication = Medication(
           id: 'temp',
           name: _nameController.text.trim(),
@@ -687,21 +684,17 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
               ),
               backgroundColor: Colors.green,
               behavior: SnackBarBehavior.floating,
-              duration: const Duration(seconds: 5),
+              duration: const Duration(seconds: 4),
               action: SnackBarAction(
-                label: 'Test Now', // ✅ CHANGED: Make it optional
+                label: '',
                 textColor: Colors.white,
                 onPressed: () {
-                  // ✅ OPTIONAL: Only send test if user taps "Test Now"
                   final addedMedication = context.read<MedicationController>().medications.last;
                   context.read<MedicationController>().testNotification(addedMedication.id);
                 },
               ),
             ),
           );
-
-          // ✅ REMOVED: No automatic test notification
-          // The notifications are now properly scheduled for the selected time
 
           Navigator.pop(context);
         }
