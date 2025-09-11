@@ -596,6 +596,7 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
                   onComplete: () {
                     medicationController.toggleMedicationTaken(medication.id);
                   },
+                  isInMedicationScreen: true, // ✅ FIXED: Pass this flag
                 ),
               )).toList(),
               SizedBox(height: screenHeight * 0.1),

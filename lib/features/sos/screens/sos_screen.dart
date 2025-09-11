@@ -401,17 +401,23 @@ class _SOSScreenState extends State<SOSScreen> with TickerProviderStateMixin {
             children: [
               const Icon(Icons.contacts, color: Colors.blue),
               const SizedBox(width: 12),
-              const Expanded(
-                child: Text(
-                  'Emergency Contacts',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+              // ✅ FIXED: Using FittedBox to prevent text overflow
+              Expanded(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: const Text(
+                    'Emergency Contacts',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
-              Spacer(flex: 1,),
-              Flexible(
+              const SizedBox(width: 8),
+              SizedBox(
+                height: 36,
                 child: ElevatedButton.icon(
                   onPressed: _showAddContactDialog,
                   icon: const Icon(Icons.add, size: 16, color: Colors.white),
@@ -419,8 +425,7 @@ class _SOSScreenState extends State<SOSScreen> with TickerProviderStateMixin {
                       style: TextStyle(fontSize: 12, color: Colors.white)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,
-                    minimumSize: const Size(70, 36),
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),

@@ -55,22 +55,18 @@ class NotificationService {
     return status.isGranted;
   }
 
-  // ✅ FIXED: Schedule notifications at the correct time
   static Future<void> scheduleMedicationNotifications(Medication medication) async {
     await _ensureInitialized();
 
     await cancelMedicationNotifications(medication.id);
 
-    // ✅ FIXED: Parse the actual selected time
-    final selectedTime = _parseTimeString(medication.time);
+    final selectedTime = NotificationTimeUtil.parseTimeString(medication.time);
 
-    print('📅 Scheduling notifications for ${medication.name} at ${medication.time}');
+    print('📅 Scheduling notifications for ${medication.name} for ${medication.durationInDays} days');
 
-    // Schedule notifications for each day of the treatment
     for (int day = 0; day < medication.durationInDays; day++) {
       final notificationDate = medication.startDate.add(Duration(days: day));
 
-      // Schedule notifications for each dose per day
       for (int dose = 1; dose <= medication.timesPerDay; dose++) {
         await _scheduleSpecificNotification(
           medication,
@@ -83,37 +79,6 @@ class NotificationService {
     }
   }
 
-  // ✅ NEW: Parse time string to TimeOfDay
-  static TimeOfDay _parseTimeString(String timeString) {
-    try {
-      // Handle formats like "8:30 AM", "2:45 PM", "14:30"
-      final parts = timeString.split(':');
-      if (parts.length != 2) return const TimeOfDay(hour: 8, minute: 0);
-
-      final hourPart = parts[0].trim();
-      final minuteAndPeriod = parts[1].trim().split(' ');
-
-      int hour = int.parse(hourPart);
-      int minute = int.parse(minuteAndPeriod[0]);
-
-      // Handle AM/PM
-      if (minuteAndPeriod.length > 1) {
-        final period = minuteAndPeriod[1].toLowerCase();
-        if (period == 'pm' && hour != 12) {
-          hour += 12;
-        } else if (period == 'am' && hour == 12) {
-          hour = 0;
-        }
-      }
-
-      return TimeOfDay(hour: hour, minute: minute);
-    } catch (e) {
-      print('Error parsing time: $timeString, using default 8:00 AM');
-      return const TimeOfDay(hour: 8, minute: 0);
-    }
-  }
-
-  // ✅ FIXED: Schedule notification at exact selected time
   static Future<void> _scheduleSpecificNotification(
       Medication medication,
       DateTime notificationDate,
@@ -151,15 +116,8 @@ class NotificationService {
       iOS: iOSDetails,
     );
 
-    // ✅ FIXED: Use the exact selected time
-    TimeOfDay actualTime = selectedTime;
+    final actualTime = NotificationTimeUtil.getDoseTime(selectedTime, doseNumber, medication.timesPerDay);
 
-    // Adjust time for multiple doses per day
-    if (medication.timesPerDay > 1) {
-      actualTime = _getTimeForDose(selectedTime, doseNumber, medication.timesPerDay);
-    }
-
-    // ✅ FIXED: Create DateTime with the EXACT selected time
     final scheduledDateTime = DateTime(
       notificationDate.year,
       notificationDate.month,
@@ -168,15 +126,9 @@ class NotificationService {
       actualTime.minute,
     );
 
-    // Only schedule if the time is in the future
     if (scheduledDateTime.isAfter(DateTime.now())) {
       final tz.TZDateTime scheduledTime = tz.TZDateTime.from(scheduledDateTime, tz.local);
-
-      // Get dose description for multiple daily doses
-      String doseDesc = '';
-      if (medication.timesPerDay > 1) {
-        doseDesc = _getDoseDescription(doseNumber, medication.timesPerDay);
-      }
+      final doseDesc = NotificationTimeUtil.getDoseDescription(doseNumber, medication.timesPerDay);
 
       await _notifications.zonedSchedule(
         safeNotificationId,
@@ -185,62 +137,10 @@ class NotificationService {
         scheduledTime,
         notificationDetails,
         payload: medication.id,
-        uiLocalNotificationDateInterpretation:
-        UILocalNotificationDateInterpretation.absoluteTime,
+        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
       );
 
       print('⏰ Scheduled: ${medication.name} on ${scheduledDateTime.day}/${scheduledDateTime.month} at ${actualTime.hour}:${actualTime.minute.toString().padLeft(2, '0')}');
-    }
-  }
-
-  // ✅ NEW: Get appropriate time for each dose
-  static TimeOfDay _getTimeForDose(TimeOfDay baseTime, int doseNumber, int totalDoses) {
-    if (totalDoses == 1) {
-      return baseTime;
-    } else if (totalDoses == 2) {
-      switch (doseNumber) {
-        case 1:
-          return const TimeOfDay(hour: 8, minute: 0);  // Morning
-        case 2:
-          return const TimeOfDay(hour: 20, minute: 0); // Evening
-        default:
-          return baseTime;
-      }
-    } else if (totalDoses == 3) {
-      switch (doseNumber) {
-        case 1:
-          return const TimeOfDay(hour: 8, minute: 0);  // Morning
-        case 2:
-          return const TimeOfDay(hour: 14, minute: 0); // Afternoon
-        case 3:
-          return const TimeOfDay(hour: 20, minute: 0); // Evening
-        default:
-          return baseTime;
-      }
-    } else {
-      // For more than 3 doses, distribute evenly
-      final hourInterval = 16 / (totalDoses - 1); // 16 hours from 6 AM to 10 PM
-      final startHour = 6;
-      final hour = (startHour + (hourInterval * (doseNumber - 1))).round();
-      return TimeOfDay(hour: hour, minute: 0);
-    }
-  }
-
-  // ✅ NEW: Get dose description
-  static String _getDoseDescription(int doseNumber, int totalDoses) {
-    if (totalDoses == 1) return '';
-
-    switch (doseNumber) {
-      case 1:
-        return 'Morning dose';
-      case 2:
-        return totalDoses == 2 ? 'Evening dose' : 'Afternoon dose';
-      case 3:
-        return 'Evening dose';
-      case 4:
-        return 'Night dose';
-      default:
-        return 'Dose $doseNumber';
     }
   }
 
@@ -248,7 +148,6 @@ class NotificationService {
     await _ensureInitialized();
 
     final baseId = int.parse(medicationId) * 1000;
-    // Cancel up to 30 days * 6 doses = 180 possible notifications
     for (int i = 0; i < 180; i++) {
       final notificationId = (baseId + i) % 2147483647;
       await _notifications.cancel(notificationId);
@@ -257,7 +156,6 @@ class NotificationService {
     print('❌ Cancelled notifications for medication: $medicationId');
   }
 
-  // ✅ UNCHANGED: Test notification (for immediate testing only)
   static Future<void> showImmediateNotification(Medication medication) async {
     await _ensureInitialized();
 
@@ -312,4 +210,67 @@ class NotificationService {
 
 class NavigationService {
   static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+}
+
+// ✅ NEW: A dedicated utility class for time calculations to avoid privacy errors
+class NotificationTimeUtil {
+  static TimeOfDay parseTimeString(String timeString) {
+    try {
+      final parts = timeString.split(':');
+      if (parts.length != 2) return const TimeOfDay(hour: 8, minute: 0);
+
+      final hourPart = parts[0].trim();
+      final minuteAndPeriod = parts[1].trim().split(' ');
+
+      int hour = int.parse(hourPart);
+      int minute = int.parse(minuteAndPeriod[0]);
+
+      if (minuteAndPeriod.length > 1) {
+        final period = minuteAndPeriod[1].toLowerCase();
+        if (period == 'pm' && hour != 12) {
+          hour += 12;
+        } else if (period == 'am' && hour == 12) {
+          hour = 0;
+        }
+      }
+      return TimeOfDay(hour: hour, minute: minute);
+    } catch (e) {
+      print('Error parsing time: $timeString, using default 8:00 AM');
+      return const TimeOfDay(hour: 8, minute: 0);
+    }
+  }
+
+  static TimeOfDay getDoseTime(TimeOfDay baseTime, int doseNumber, int totalDoses) {
+    if (totalDoses == 1) {
+      return baseTime;
+    } else if (totalDoses == 2) {
+      return (doseNumber == 1)
+          ? baseTime
+          : TimeOfDay(hour: (baseTime.hour + 12) % 24, minute: baseTime.minute);
+    } else {
+      final intervalInMinutes = (24 * 60) ~/ totalDoses;
+      final baseMinutes = baseTime.hour * 60 + baseTime.minute;
+      final newMinutes = baseMinutes + (intervalInMinutes * (doseNumber - 1));
+      final newHour = (newMinutes ~/ 60) % 24;
+      final newMinute = newMinutes % 60;
+      return TimeOfDay(hour: newHour, minute: newMinute);
+    }
+  }
+
+  static String getDoseDescription(int doseNumber, int totalDoses) {
+    if (totalDoses == 1) return '';
+
+    switch (doseNumber) {
+      case 1:
+        return 'Morning dose';
+      case 2:
+        return totalDoses == 2 ? 'Evening dose' : 'Afternoon dose';
+      case 3:
+        return 'Evening dose';
+      case 4:
+        return 'Night dose';
+      default:
+        return 'Dose $doseNumber';
+    }
+  }
 }

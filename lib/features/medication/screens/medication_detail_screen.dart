@@ -217,13 +217,12 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
     );
   }
 
-  // ✅ FIXED: Updated _buildStatCard with proper sizing and text wrapping prevention
   Widget _buildStatCard(
-    String title,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
+      String title,
+      String value,
+      IconData icon,
+      Color color,
+      ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -239,7 +238,7 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
       ),
       child: Column(
         mainAxisSize:
-            MainAxisSize.min, // ✅ FIXED: Prevent unnecessary expansion
+        MainAxisSize.min, // ✅ FIXED: Prevent unnecessary expansion
         children: [
           // ✅ FIXED: Icon with consistent circle background
           Container(
@@ -286,7 +285,7 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
               textAlign: TextAlign.center,
               maxLines: 1, // ✅ FIXED: Force single line
               overflow:
-                  TextOverflow.ellipsis, // ✅ FIXED: Add ellipsis as backup
+              TextOverflow.ellipsis, // ✅ FIXED: Add ellipsis as backup
             ),
           ),
         ],
@@ -378,24 +377,17 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
     );
   }
 
-  // ✅ FIXED: Update the "Mark as Taken" button in MedicationDetailScreen
   Widget _buildActionButtons() {
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
         children: [
-          // ✅ FIXED: Mark as Taken Button - marks TODAY's doses
           SizedBox(
             width: double.infinity,
             height: 56,
             child: ElevatedButton.icon(
               onPressed: () {
-                // ✅ FIXED: Mark today's dose as taken, not the whole medication
                 final today = DateTime.now();
-                final todayString =
-                    '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
-
-                // Check if all today's doses are already taken
                 bool allTodayDosesTaken = true;
                 for (int i = 1; i <= widget.medication.timesPerDay; i++) {
                   if (!widget.medication.isDoseTakenForDate(today, i)) {
@@ -406,7 +398,7 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
 
                 if (allTodayDosesTaken) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
+                    const SnackBar(
                       content: Text('All doses for today are already taken!'),
                       backgroundColor: Colors.orange,
                     ),
@@ -419,7 +411,7 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
                   });
 
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
+                    const SnackBar(
                       content: Text(
                         'All remaining doses for today marked as taken!',
                       ),
@@ -441,59 +433,71 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
           ),
           const SizedBox(height: 12),
 
+          // ✅ FIXED: Consistent layout for action buttons
           Row(
-            mainAxisSize: MainAxisSize.min,
             children: [
               Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    _showDeleteDialog(context);
-                  },
-                  icon: const Icon(Icons.delete),
-                  label: const Text('Delete'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: _refreshInformation,
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('Refresh'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: _getMedicationColor(),
-                    side: BorderSide(color: _getMedicationColor()),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Edit medication coming soon!'),
+                child: SizedBox(
+                  height: 48,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      _showDeleteDialog(context);
+                    },
+                    icon: const Icon(Icons.delete, size: 20),
+                    label: const Text('Delete'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                    );
-                  },
-                  icon: const Icon(Icons.edit),
-                  label: const Text('Edit'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.blue,
-                    side: const BorderSide(color: Colors.blue),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+
+              Expanded(
+                child: SizedBox(
+                  height: 48,
+                  child: OutlinedButton.icon(
+                    onPressed: _refreshInformation,
+                    icon: const Icon(Icons.refresh, size: 20),
+                    label: const Text('Refresh'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: _getMedicationColor(),
+                      side: BorderSide(color: _getMedicationColor()),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+
+              Expanded(
+                child: SizedBox(
+                  height: 48,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Edit medication coming soon!'),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.edit, size: 20),
+                    label: const Text('Edit'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.blue,
+                      side: const BorderSide(color: Colors.blue),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
                     ),
                   ),
                 ),
@@ -517,7 +521,10 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
             children: [
               Icon(Icons.warning, color: Colors.red),
               const SizedBox(width: 8),
-              const Text('Delete Medication'),
+              // ✅ FIXED: Text overflow in dialog title
+              Expanded(
+                child: const Text('Delete Medication'),
+              ),
             ],
           ),
           content: Text(
@@ -527,13 +534,13 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Close dialog
+                Navigator.of(context).pop();
               },
               child: Text('Cancel', style: TextStyle(color: Colors.grey)),
             ),
             ElevatedButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Close dialog first
+                Navigator.of(context).pop();
                 Navigator.of(context).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
@@ -607,7 +614,7 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
     } catch (e) {
       setState(() {
         _drugInfo =
-            'Unable to load drug information. Please check your internet connection.';
+        'Unable to load drug information. Please check your internet connection.';
         _isLoadingInfo = false;
       });
     }
@@ -624,7 +631,7 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
               'parts': [
                 {
                   'text':
-                      '''Please provide comprehensive information about the medication "$medicationName". 
+                  '''Please provide comprehensive information about the medication "$medicationName". 
 
 Structure your response as follows:
 1. GENERAL: General information about this medication, what it's used for, and how it works

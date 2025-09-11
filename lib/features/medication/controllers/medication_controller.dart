@@ -45,7 +45,6 @@ class MedicationController with ChangeNotifier {
     print('🗑️ Removed medication for ID: $id');
   }
 
-  // ✅ FIXED: Toggle specific dose for specific date
   void toggleMedicationDose(String id, DateTime date, int doseNumber) {
     final index = _medications.indexWhere((med) => med.id == id);
 
@@ -53,7 +52,6 @@ class MedicationController with ChangeNotifier {
       final medication = _medications[index];
       final currentStatus = medication.isDoseTakenForDate(date, doseNumber);
 
-      // ✅ FIXED: Only mark this specific dose, not other doses
       _medications[index] = medication.markDoseTaken(date, doseNumber, !currentStatus);
       notifyListeners();
 
@@ -62,10 +60,9 @@ class MedicationController with ChangeNotifier {
     }
   }
 
-  // ✅ LEGACY: Keep old method for backwards compatibility
   void toggleMedicationTaken(String id, [DateTime? date]) {
     final targetDate = date ?? DateTime.now();
-    toggleMedicationDose(id, targetDate, 1); // Default to dose 1
+    toggleMedicationDose(id, targetDate, 1);
   }
 
   List<Medication> getUpcomingMedications() {
@@ -77,13 +74,11 @@ class MedicationController with ChangeNotifier {
     return _medications.where((med) => med.isActiveOnDate(today)).toList();
   }
 
-  // ✅ UPDATED: Get medication doses for specific date
   List<MedicationDose> getMedicationsByDate(DateTime date) {
     final List<MedicationDose> doses = [];
 
     for (final medication in _medications) {
       if (medication.isActiveOnDate(date)) {
-        // ✅ FIXED: Create separate dose objects for each daily dose
         for (int dose = 1; dose <= medication.timesPerDay; dose++) {
           doses.add(MedicationDose(
             medication: medication,
@@ -111,7 +106,6 @@ class MedicationController with ChangeNotifier {
   }
 }
 
-// ✅ UPDATED: Helper class for individual doses
 class MedicationDose {
   final Medication medication;
   final int doseNumber;
@@ -124,53 +118,19 @@ class MedicationDose {
   });
 
   String get doseLabel {
-    if (medication.timesPerDay == 1) {
-      return medication.time;
-    } else {
-      // Generate different times for multiple doses
-      switch (doseNumber) {
-        case 1:
-          return '8:00 AM';
-        case 2:
-          return medication.timesPerDay == 2 ? '8:00 PM' : '2:00 PM';
-        case 3:
-          return '8:00 PM';
-        case 4:
-          return '11:00 PM';
-        case 5:
-          return '6:00 AM';
-        case 6:
-          return '12:00 PM';
-        default:
-          return medication.time;
-      }
-    }
+    final baseTime = NotificationTimeUtil.parseTimeString(medication.time);
+    final calculatedTime = NotificationTimeUtil.getDoseTime(baseTime, doseNumber, medication.timesPerDay);
+
+    return calculatedTime.hour.toString().padLeft(2, '0') + ':' + calculatedTime.minute.toString().padLeft(2, '0');
   }
 
   String get doseDescription {
     if (medication.timesPerDay == 1) {
       return '';
-    } else {
-      switch (doseNumber) {
-        case 1:
-          return 'Morning dose';
-        case 2:
-          return medication.timesPerDay == 2 ? 'Evening dose' : 'Afternoon dose';
-        case 3:
-          return 'Evening dose';
-        case 4:
-          return 'Night dose';
-        case 5:
-          return 'Early morning dose';
-        case 6:
-          return 'Noon dose';
-        default:
-          return 'Dose $doseNumber';
-      }
     }
+    return NotificationTimeUtil.getDoseDescription(doseNumber, medication.timesPerDay);
   }
 
-  // ✅ FIXED: Check individual dose status
   bool get isTaken {
     return medication.isDoseTakenForDate(date, doseNumber);
   }

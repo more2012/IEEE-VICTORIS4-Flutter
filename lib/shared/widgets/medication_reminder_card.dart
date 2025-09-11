@@ -169,17 +169,19 @@ class MedicationReminderCard extends StatelessWidget {
             ),
             SizedBox(width: screenWidth * 0.02),
 
-            // ✅ FIXED: Working button with proper functionality
+            // ✅ FIXED: Working button with proper functionality and non-clickable state in medication screen
             if (!isCompletelyFinished)
               GestureDetector(
-                onTap: onComplete, // ✅ FIXED: This MUST be called to work!
+                onTap: isInMedicationScreen ? null : onComplete,
                 child: Container(
                   padding: EdgeInsets.symmetric(
                     horizontal: screenWidth * 0.03,
                     vertical: screenWidth * 0.015,
                   ),
                   decoration: BoxDecoration(
-                    color: dateSpecificTaken ? Colors.green : Colors.blue,
+                    color: dateSpecificTaken
+                        ? Colors.green
+                        : isInMedicationScreen ? Colors.grey.shade400 : Colors.blue,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -231,10 +233,8 @@ class MedicationReminderCard extends StatelessWidget {
   // ✅ FIXED: Proper button text logic
   String _getButtonText(bool dateSpecificTaken) {
     if (dateSpecificTaken) {
-      return 'Taken'; // Always show "Taken" when completed
+      return 'Taken';
     }
-
-    // Show "In Progress" in medication screen, "Take" in home screen
     return isInMedicationScreen ? 'In Progress' : 'Take';
   }
 
