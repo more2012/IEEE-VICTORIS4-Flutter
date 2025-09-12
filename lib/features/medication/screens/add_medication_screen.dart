@@ -585,10 +585,10 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
             valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
           ),
         )
-            : Text(
+            : const Text(
           'Add Medication',
           style: TextStyle(
-            fontSize: screenWidth * 0.04,
+            fontSize: 16,
             fontWeight: FontWeight.w600,
             color: Colors.white,
           ),
@@ -666,12 +666,11 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
           id: 'temp',
           name: _nameController.text.trim(),
           dosage: _dosageController.text.trim(),
-          time: _selectedTime.format(context),
+          time: '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}',
           type: _selectedType,
           timesPerDay: _timesPerDay,
           durationInDays: _durationInDays,
           startDate: DateTime.now(),
-          nextDoseTime: DateTime.now(),
         );
 
         await context.read<MedicationController>().addMedication(medication);

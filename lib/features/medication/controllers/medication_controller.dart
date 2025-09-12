@@ -21,7 +21,7 @@ class MedicationController with ChangeNotifier {
   // Fetch all medications from the backend
   Future<void> fetchMedications() async {
     try {
-      final response = await ApiService.get('/medications/');
+      final response = await ApiService.get('/drugs/');
       final List<dynamic> medicationsJson = response as List<dynamic>;
       _medications.clear();
       _medications.addAll(medicationsJson.map((json) => Medication.fromJson(json)).toList());
@@ -39,7 +39,8 @@ class MedicationController with ChangeNotifier {
 
   Future<void> addMedication(Medication medication) async {
     try {
-      final response = await ApiService.post('/medications/', medication.toJson());
+      final response = await ApiService.post('/drugs/', medication.toJson());
+      print(medication.toJson());
       final newMedication = Medication.fromJson(response);
       _medications.add(newMedication);
       await NotificationService.scheduleMedicationNotifications(newMedication);
@@ -53,7 +54,7 @@ class MedicationController with ChangeNotifier {
 
   Future<void> removeMedication(String id) async {
     try {
-      await ApiService.delete('/medications/$id/');
+      await ApiService.delete('/drugs/$id/');
       await NotificationService.cancelMedicationNotifications(id);
       _medications.removeWhere((med) => med.id == id);
       notifyListeners();
@@ -72,7 +73,8 @@ class MedicationController with ChangeNotifier {
       final updatedMedication = medication.markDoseTaken(date, doseNumber, !currentStatus);
 
       try {
-        await ApiService.put('/medications/$id/', {'doseTaken': updatedMedication.doseTaken});
+        // ✅ FIXED: Send the full medication object in the PUT request
+        await ApiService.put('/drugs/$id/', updatedMedication.toJson());
         _medications[index] = updatedMedication;
         notifyListeners();
         final dateStr = "${date.day}/${date.month}/${date.year}";

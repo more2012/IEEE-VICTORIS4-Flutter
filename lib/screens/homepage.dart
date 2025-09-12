@@ -31,6 +31,7 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     _loadUserData();
+    _loadMedications(); // ✅ FIXED: Load medications on app start
 
     _animationController = AnimationController(
       duration: const Duration(seconds: 4),
@@ -59,6 +60,11 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
       }
     } catch (_) {
     }
+  }
+
+  // ✅ NEW: Added method to fetch medications from backend
+  void _loadMedications() {
+    context.read<MedicationController>().fetchMedications();
   }
 
   @override
@@ -596,7 +602,6 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
                   onComplete: () {
                     medicationController.toggleMedicationTaken(medication.id);
                   },
-                  isInMedicationScreen: true, // ✅ FIXED: Pass this flag
                 ),
               )).toList(),
               SizedBox(height: screenHeight * 0.1),

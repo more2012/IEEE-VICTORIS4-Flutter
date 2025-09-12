@@ -736,7 +736,7 @@ class _SOSScreenState extends State<SOSScreen> with TickerProviderStateMixin {
           TextButton(
             onPressed: () async {
               try {
-                await ApiService.delete('/emergency-contacts/${contact.id}');
+                await ApiService.delete('/emergency/contacts/${contact.id}/');
                 setState(() {
                   _emergencyContacts.remove(contact);
                 });

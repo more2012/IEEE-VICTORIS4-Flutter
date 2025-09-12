@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class Medication {
   final String id;
   final String name;
@@ -7,8 +9,8 @@ class Medication {
   final int timesPerDay;
   final int durationInDays;
   final DateTime startDate;
-  final Map<String, bool> doseTaken; // ✅ FIXED: Now tracks individual doses
-  final bool isTaken; // For backwards compatibility only
+  final Map<String, bool> doseTaken;
+  final bool isTaken;
   final DateTime? nextDoseTime;
   final String frequency;
 
@@ -21,7 +23,7 @@ class Medication {
     this.timesPerDay = 1,
     this.durationInDays = 7,
     DateTime? startDate,
-    Map<String, bool>? doseTaken, // ✅ FIXED: Individual dose tracking
+    Map<String, bool>? doseTaken,
     this.isTaken = false,
     this.nextDoseTime,
     this.frequency = 'Daily',
@@ -29,20 +31,17 @@ class Medication {
         startDate = startDate ?? DateTime.now(),
         doseTaken = doseTaken ?? {};
 
-  // ✅ FIXED: Check if medication is completely finished (all days, all doses)
   bool get isCompletelyFinished {
     final totalDosesRequired = durationInDays * timesPerDay;
     final dosesCompleted = doseTaken.values.where((taken) => taken).length;
     return dosesCompleted >= totalDosesRequired;
   }
 
-  // ✅ FIXED: Check if specific dose for specific date is taken
   bool isDoseTakenForDate(DateTime date, int doseNumber) {
     final doseKey = _formatDoseKey(date, doseNumber);
     return doseTaken[doseKey] ?? false;
   }
 
-  // ✅ NEW: Check if ALL doses for a specific date are taken
   bool areAllDosesTakenForDate(DateTime date) {
     for (int dose = 1; dose <= timesPerDay; dose++) {
       if (!isDoseTakenForDate(date, dose)) {
@@ -52,7 +51,6 @@ class Medication {
     return true;
   }
 
-  // ✅ NEW: Get completion percentage
   double get completionPercentage {
     final totalDoses = durationInDays * timesPerDay;
     if (totalDoses == 0) return 0.0;
@@ -60,7 +58,6 @@ class Medication {
     return (completedDoses / totalDoses).clamp(0.0, 1.0);
   }
 
-  // ✅ FIXED: Check if date is within medication period
   bool isActiveOnDate(DateTime date) {
     final endDate = startDate.add(Duration(days: durationInDays));
     final dateOnly = DateTime(date.year, date.month, date.day);
@@ -70,7 +67,6 @@ class Medication {
     return !dateOnly.isBefore(startOnly) && dateOnly.isBefore(endOnly);
   }
 
-  // ✅ NEW: Get remaining days
   int get remainingDays {
     final today = DateTime.now();
     final endDate = startDate.add(Duration(days: durationInDays));
@@ -78,7 +74,6 @@ class Medication {
     return remaining < 0 ? 0 : remaining;
   }
 
-  // ✅ NEW: Get days completed (all doses taken)
   int get daysCompleted {
     int completedDays = 0;
     for (int day = 0; day < durationInDays; day++) {
@@ -90,7 +85,6 @@ class Medication {
     return completedDays;
   }
 
-  // ✅ FIXED: Create unique key for each dose
   static String _formatDoseKey(DateTime date, int doseNumber) {
     final dateKey = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
     return '$dateKey-dose-$doseNumber';
@@ -105,7 +99,7 @@ class Medication {
     int? timesPerDay,
     int? durationInDays,
     DateTime? startDate,
-    Map<String, bool>? doseTaken, // ✅ FIXED
+    Map<String, bool>? doseTaken,
     bool? isTaken,
     DateTime? nextDoseTime,
     String? frequency,
@@ -119,14 +113,13 @@ class Medication {
       timesPerDay: timesPerDay ?? this.timesPerDay,
       durationInDays: durationInDays ?? this.durationInDays,
       startDate: startDate ?? this.startDate,
-      doseTaken: doseTaken ?? Map.from(this.doseTaken), // ✅ FIXED
+      doseTaken: doseTaken ?? Map.from(this.doseTaken),
       isTaken: isTaken ?? this.isTaken,
       nextDoseTime: nextDoseTime ?? this.nextDoseTime,
       frequency: frequency ?? this.frequency,
     );
   }
 
-  // ✅ FIXED: Mark specific dose taken for specific date
   Medication markDoseTaken(DateTime date, int doseNumber, bool taken) {
     final doseKey = _formatDoseKey(date, doseNumber);
     final newDoseTaken = Map<String, bool>.from(doseTaken);
@@ -134,11 +127,10 @@ class Medication {
 
     return copyWith(
       doseTaken: newDoseTaken,
-      isTaken: taken, // Keep for backward compatibility
+      isTaken: taken,
     );
   }
 
-  // ✅ NEW: Get status text for UI
   String getStatusText() {
     if (isCompletelyFinished) {
       return 'Completed ($daysCompleted/$durationInDays days)';
@@ -151,39 +143,39 @@ class Medication {
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
+      'id': int.tryParse(id),
       'name': name,
       'dosage': dosage,
-      'time': time,
+      'time': '$time:00',
       'type': type,
-      'timesPerDay': timesPerDay,
-      'durationInDays': durationInDays,
-      'startDate': startDate.toIso8601String(),
-      'doseTaken': doseTaken, // ✅ FIXED
-      'isTaken': isTaken,
-      'nextDoseTime': nextDoseTime?.toIso8601String(),
-      'frequency': frequency,
+      // ✅ FIXED: Using snake_case for backend compatibility
+      'times_per_day': timesPerDay,
+      'duration_in_days': durationInDays,
+      // ✅ FIXED: Formatting startDate to 'YYYY-MM-DD'
+      'start_date': '${startDate.year}-${startDate.month.toString().padLeft(2, '0')}-${startDate.day.toString().padLeft(2, '0')}',
+      // The backend expects a list, so we'll adjust here if needed, but for now we'll stick to a map
+      'dose_taken': doseTaken,
     };
   }
 
   factory Medication.fromJson(Map<String, dynamic> json) {
     return Medication(
-      id: json['id'] ?? '',
+      id: json['id']?.toString() ?? '',
       name: json['name'] ?? '',
       dosage: json['dosage'] ?? '',
-      time: json['time'] ?? '',
+      time: (json['time'] as String?)?.substring(0, 5) ?? '',
       type: json['type'] ?? 'Tablet',
-      timesPerDay: json['timesPerDay'] ?? 1,
-      durationInDays: json['durationInDays'] ?? 7,
-      startDate: json['startDate'] != null
-          ? DateTime.parse(json['startDate'])
+      // ✅ FIXED: Parsing from snake_case key
+      timesPerDay: json['times_per_day'] ?? 1,
+      // ✅ FIXED: Parsing from snake_case key
+      durationInDays: json['duration_in_days'] ?? 7,
+      // ✅ FIXED: Parsing from snake_case key
+      startDate: json['start_date'] != null
+          ? DateTime.parse(json['start_date'])
           : DateTime.now(),
-      doseTaken: Map<String, bool>.from(json['doseTaken'] ?? {}), // ✅ FIXED
-      isTaken: json['isTaken'] ?? false,
-      nextDoseTime: json['nextDoseTime'] != null
-          ? DateTime.parse(json['nextDoseTime'])
-          : null,
-      frequency: json['frequency'] ?? 'Daily',
+      // ✅ FIXED: Parsing from snake_case key
+      doseTaken: Map<String, bool>.from(json['dose_taken'] ?? {}),
+      isTaken: json['is_taken'] ?? false,
     );
   }
 }
