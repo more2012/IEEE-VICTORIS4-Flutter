@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:async';
+import '../../../services/api_service.dart';
 
 class SOSScreen extends StatefulWidget {
   const SOSScreen({super.key});
@@ -18,16 +19,17 @@ class _SOSScreenState extends State<SOSScreen> with TickerProviderStateMixin {
   Timer? _longPressTimer;
   Position? _currentPosition;
   String _currentLocationMessage = 'Getting your location...';
+  bool _isLoadingContacts = true;
 
-  // Emergency contacts list
-  final List<EmergencyContact> _emergencyContacts = [
-    EmergencyContact(
-      name: 'Emergency Services',
-      number: '123',
-      relationship: 'Emergency',
-      isDefault: true,
-    ),
-  ];
+  List<EmergencyContact> _emergencyContacts = [];
+
+  // Default emergency services contact
+  final EmergencyContact _defaultEmergency = EmergencyContact(
+    name: 'Emergency Services',
+    number: '123',
+    relationship: 'Emergency',
+    isDefault: true,
+  );
 
   final List<String> _relationships = [
     'Family',
@@ -53,6 +55,7 @@ class _SOSScreenState extends State<SOSScreen> with TickerProviderStateMixin {
     ));
 
     _pulseController.repeat(reverse: true);
+    _fetchEmergencyContacts();
     _getCurrentLocation();
   }
 
@@ -61,6 +64,27 @@ class _SOSScreenState extends State<SOSScreen> with TickerProviderStateMixin {
     _pulseController.dispose();
     _longPressTimer?.cancel();
     super.dispose();
+  }
+
+  Future<void> _fetchEmergencyContacts() async {
+    setState(() {
+      _isLoadingContacts = true;
+    });
+    try {
+      final response = await ApiService.get('/emergency/contacts/');
+      final List<dynamic> contactsJson = response as List<dynamic>;
+      _emergencyContacts = contactsJson.map((json) => EmergencyContact.fromJson(json)).toList();
+      _emergencyContacts.insert(0, _defaultEmergency);
+      print('✅ Fetched emergency contacts from backend');
+    } catch (e) {
+      print('⚠️ Error fetching emergency contacts: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingContacts = false;
+        });
+      }
+    }
   }
 
   Future<void> _getCurrentLocation() async {
@@ -401,7 +425,6 @@ class _SOSScreenState extends State<SOSScreen> with TickerProviderStateMixin {
             children: [
               const Icon(Icons.contacts, color: Colors.blue),
               const SizedBox(width: 12),
-              // ✅ FIXED: Using FittedBox to prevent text overflow
               Expanded(
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
@@ -435,13 +458,17 @@ class _SOSScreenState extends State<SOSScreen> with TickerProviderStateMixin {
             ],
           ),
           const SizedBox(height: 20),
-          ..._emergencyContacts
-              .map((contact) => Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: _buildContactItem(contact),
-          ))
-              .toList(),
-          if (_emergencyContacts.length == 1)
+          _isLoadingContacts
+              ? const Center(child: CircularProgressIndicator())
+              : Column(
+            children: _emergencyContacts
+                .map((contact) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _buildContactItem(contact),
+            ))
+                .toList(),
+          ),
+          if (_emergencyContacts.length == 1 && !_isLoadingContacts)
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -525,8 +552,12 @@ class _SOSScreenState extends State<SOSScreen> with TickerProviderStateMixin {
               else ...[
                 IconButton(
                   onPressed: () {
+                    final locationLink = _currentPosition != null
+                        ? 'http://maps.google.com/maps?q=${_currentPosition!.latitude},${_currentPosition!.longitude}'
+                        : 'Location unavailable';
+
                     final message =
-                        'EMERGENCY ALERT: I need immediate help. My last known location is not available.';
+                        'EMERGENCY ALERT: I need immediate help. My last known location is: $locationLink';
                     launchUrl(Uri.parse(
                         'sms:${contact.number}?body=${Uri.encodeComponent(message)}'));
                   },
@@ -640,10 +671,10 @@ class _SOSScreenState extends State<SOSScreen> with TickerProviderStateMixin {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               if (nameController.text.trim().isNotEmpty &&
                   numberController.text.trim().isNotEmpty) {
-                _addContact(
+                await _addContact(
                   nameController.text.trim(),
                   numberController.text.trim(),
                   selectedRelationship!,
@@ -658,23 +689,36 @@ class _SOSScreenState extends State<SOSScreen> with TickerProviderStateMixin {
     );
   }
 
-  void _addContact(String name, String number, String relationship) {
-    setState(() {
-      _emergencyContacts.add(EmergencyContact(
-        name: name,
-        number: number,
-        relationship: relationship,
-        isDefault: false,
-      ));
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$name added to emergency contacts'),
-        backgroundColor: Colors.green,
-        behavior: SnackBarBehavior.floating,
-      ),
+  Future<void> _addContact(String name, String number, String relationship) async {
+    final newContact = EmergencyContact(
+      name: name,
+      number: number,
+      relationship: relationship,
+      isDefault: false,
     );
+
+    try {
+      final response = await ApiService.post('/emergency/contacts/', newContact.toJson());
+      final addedContact = EmergencyContact.fromJson(response);
+      setState(() {
+        _emergencyContacts.add(addedContact);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$name added to emergency contacts'),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to add contact: $e'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   void _deleteContact(EmergencyContact contact) {
@@ -690,18 +734,30 @@ class _SOSScreenState extends State<SOSScreen> with TickerProviderStateMixin {
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () {
-              setState(() {
-                _emergencyContacts.remove(contact);
-              });
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('${contact.name} removed from emergency contacts'),
-                  backgroundColor: Colors.orange,
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
+            onPressed: () async {
+              try {
+                await ApiService.delete('/emergency-contacts/${contact.id}');
+                setState(() {
+                  _emergencyContacts.remove(contact);
+                });
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('${contact.name} removed from emergency contacts'),
+                    backgroundColor: Colors.orange,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              } catch (e) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Failed to delete contact: $e'),
+                    backgroundColor: Colors.red,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
             },
             child: const Text('Delete', style: TextStyle(color: Colors.red)),
           ),
@@ -712,15 +768,36 @@ class _SOSScreenState extends State<SOSScreen> with TickerProviderStateMixin {
 }
 
 class EmergencyContact {
+  final String? id;
   final String name;
   final String number;
   final String relationship;
   final bool isDefault;
 
   EmergencyContact({
+    this.id,
     required this.name,
     required this.number,
     required this.relationship,
     this.isDefault = false,
   });
+
+  factory EmergencyContact.fromJson(Map<String, dynamic> json) {
+    return EmergencyContact(
+      id: json['id']?.toString(),
+      name: json['name'] ?? '',
+      number: json['number'] ?? '',
+      relationship: json['relationship'] ?? 'Other',
+      isDefault: json['is_default'] ?? false, // ✅ FIXED: Mismatch between backend and frontend key name
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'number': number,
+      'relationship': relationship,
+      'is_default': isDefault, // ✅ FIXED: Mismatch between backend and frontend key name
+    };
+  }
 }

@@ -4,14 +4,14 @@ import '../models/auth_models.dart';
 import '../../../services/storage_service.dart';
 
 class AuthService {
-  static const String baseUrl = 'https://3awn.up.railway.app/api';
+  static const String baseUrl = 'https://3awn.up.railway.app';
 
   static Future<AuthResponse> login(LoginRequest request) async {
     try {
       print('🚀 Login Request: ${json.encode(request.toJson())}');
 
       final response = await http.post(
-        Uri.parse('$baseUrl/auth/login/'),
+        Uri.parse('$baseUrl/api/auth/login/'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(request.toJson()),
       );
@@ -47,7 +47,6 @@ class AuthService {
       final responseData = AuthResponse.fromJson(responseJson);
 
       if (responseData.success && responseData.tokens != null) {
-        // Store tokens and user data
         await StorageService.setString(
           'auth_token',
           responseData.tokens!.access,
@@ -77,7 +76,7 @@ class AuthService {
       print('🚀 SignUp Request: ${json.encode(request.toJson())}');
 
       final response = await http.post(
-        Uri.parse('$baseUrl/auth/register/'),
+        Uri.parse('$baseUrl/api/auth/register/'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(request.toJson()),
       );
@@ -114,7 +113,6 @@ class AuthService {
       final responseData = AuthResponse.fromJson(responseJson);
 
       if (responseData.success && responseData.tokens != null) {
-        // Store tokens and user data
         await StorageService.setString(
           'auth_token',
           responseData.tokens!.access,
@@ -140,11 +138,11 @@ class AuthService {
 
   // Forgot Password
   static Future<AuthResponse> forgotPassword(
-    ForgotPasswordRequest request,
-  ) async {
+      ForgotPasswordRequest request,
+      ) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/auth/forgot-password/'),
+        Uri.parse('$baseUrl/api/auth/forgot-password/'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(request.toJson()),
       );
@@ -159,7 +157,7 @@ class AuthService {
   static Future<AuthResponse> verifyOTP(OTPVerificationRequest request) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/auth/verify-otp/'),
+        Uri.parse('$baseUrl/api/auth/verify-otp/'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(request.toJson()),
       );
@@ -172,11 +170,11 @@ class AuthService {
 
   // Reset Password
   static Future<AuthResponse> resetPassword(
-    ResetPasswordRequest request,
-  ) async {
+      ResetPasswordRequest request,
+      ) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/auth/reset-password/'),
+        Uri.parse('$baseUrl/api/auth/reset-password/'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(request.toJson()),
       );
@@ -196,12 +194,43 @@ class AuthService {
 
   // Check if user is logged in
   static Future<bool> isLoggedIn() async {
-    final token = StorageService.getString('auth_token');
+    final token = await StorageService.getString('auth_token');
     return token != null && token.isNotEmpty;
   }
 
   // Get stored token
-  static String? getToken() {
-    return StorageService.getString('auth_token');
+  static Future<String?> getToken() async {
+    return await StorageService.getString('auth_token');
+  }
+
+  // ✅ NEW: Refresh an expired token
+  static Future<String?> refreshToken() async {
+    try {
+      final refreshToken = await StorageService.getString('refresh_token');
+      if (refreshToken == null) {
+        print('⚠️ No refresh token available.');
+        return null;
+      }
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/auth/token/refresh/'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'refresh': refreshToken}),
+      );
+
+      if (response.statusCode == 200) {
+        final newTokens = jsonDecode(response.body);
+        final newAccessToken = newTokens['access'];
+        await StorageService.setString('auth_token', newAccessToken);
+        print('✅ Token refreshed successfully.');
+        return newAccessToken;
+      } else {
+        print('⚠️ Failed to refresh token: ${response.statusCode}');
+        return null;
+      }
+    } catch (e) {
+      print('❌ Refresh token failed: $e');
+      return null;
+    }
   }
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/medication_model.dart';
 import '../../../services/notification_service.dart';
+import '../../../services/api_service.dart';
+import 'dart:convert';
 
 class MedicationController with ChangeNotifier {
   final List<Medication> _medications = [];
@@ -16,6 +18,19 @@ class MedicationController with ChangeNotifier {
     await NotificationService.initialize();
   }
 
+  // Fetch all medications from the backend
+  Future<void> fetchMedications() async {
+    try {
+      final response = await ApiService.get('/medications/');
+      final List<dynamic> medicationsJson = response as List<dynamic>;
+      _medications.clear();
+      _medications.addAll(medicationsJson.map((json) => Medication.fromJson(json)).toList());
+      notifyListeners();
+      print('✅ Fetched all medications from backend');
+    } catch (e) {
+      print('⚠️ Error fetching medications: $e');
+    }
+  }
   String _generateSafeId() {
     final id = _nextId;
     _nextId++;
@@ -23,43 +38,52 @@ class MedicationController with ChangeNotifier {
   }
 
   Future<void> addMedication(Medication medication) async {
-    final safeId = _generateSafeId();
-    final now = DateTime.now();
-
-    final medicationWithSafeId = medication.copyWith(
-      id: safeId,
-      startDate: DateTime(now.year, now.month, now.day),
-    );
-
-    _medications.add(medicationWithSafeId);
-    await NotificationService.scheduleMedicationNotifications(medicationWithSafeId);
-    notifyListeners();
-
-    print('✅ Added medication: ${medicationWithSafeId.name} for ${medicationWithSafeId.durationInDays} days');
+    try {
+      final response = await ApiService.post('/medications/', medication.toJson());
+      final newMedication = Medication.fromJson(response);
+      _medications.add(newMedication);
+      await NotificationService.scheduleMedicationNotifications(newMedication);
+      notifyListeners();
+      print('✅ Added medication to backend: ${newMedication.name}');
+    } catch (e) {
+      print('⚠️ Error adding medication: $e');
+      throw Exception('Failed to add medication');
+    }
   }
 
   Future<void> removeMedication(String id) async {
-    await NotificationService.cancelMedicationNotifications(id);
-    _medications.removeWhere((med) => med.id == id);
-    notifyListeners();
-    print('🗑️ Removed medication for ID: $id');
+    try {
+      await ApiService.delete('/medications/$id/');
+      await NotificationService.cancelMedicationNotifications(id);
+      _medications.removeWhere((med) => med.id == id);
+      notifyListeners();
+      print('🗑️ Removed medication from backend for ID: $id');
+    } catch (e) {
+      print('⚠️ Error removing medication: $e');
+    }
   }
 
-  void toggleMedicationDose(String id, DateTime date, int doseNumber) {
+  Future<void> toggleMedicationDose(String id, DateTime date, int doseNumber) async {
     final index = _medications.indexWhere((med) => med.id == id);
 
     if (index != -1) {
       final medication = _medications[index];
       final currentStatus = medication.isDoseTakenForDate(date, doseNumber);
+      final updatedMedication = medication.markDoseTaken(date, doseNumber, !currentStatus);
 
-      _medications[index] = medication.markDoseTaken(date, doseNumber, !currentStatus);
-      notifyListeners();
-
-      final dateStr = "${date.day}/${date.month}/${date.year}";
-      print('${!currentStatus ? '✅' : '❌'} ${medication.name} dose $doseNumber ${!currentStatus ? 'taken' : 'not taken'} on $dateStr');
+      try {
+        await ApiService.put('/medications/$id/', {'doseTaken': updatedMedication.doseTaken});
+        _medications[index] = updatedMedication;
+        notifyListeners();
+        final dateStr = "${date.day}/${date.month}/${date.year}";
+        print('${!currentStatus ? '✅' : '❌'} ${medication.name} dose $doseNumber ${!currentStatus ? 'taken' : 'not taken'} on $dateStr');
+      } catch (e) {
+        print('⚠️ Error updating medication status: $e');
+      }
     }
   }
 
+  // ✅ LEGACY: Kept for backwards compatibility
   void toggleMedicationTaken(String id, [DateTime? date]) {
     final targetDate = date ?? DateTime.now();
     toggleMedicationDose(id, targetDate, 1);

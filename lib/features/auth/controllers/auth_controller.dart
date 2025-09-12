@@ -8,12 +8,11 @@ import 'dart:convert';
 class AuthController with ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
-  String? _successMessage; // ✅ ADDED: Missing success message
+  String? _successMessage;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _isLoggedIn = false;
 
-  // Form controllers
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController fullNameController = TextEditingController();
@@ -23,15 +22,13 @@ class AuthController with ChangeNotifier {
   final TextEditingController confirmPasswordController = TextEditingController();
   final TextEditingController confirmNewPasswordController = TextEditingController(); // ✅ ADDED: Missing controller
 
-  // Getters
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
-  String? get successMessage => _successMessage; // ✅ ADDED: Missing getter
+  String? get successMessage => _successMessage;
   bool get obscurePassword => _obscurePassword;
   bool get obscureConfirmPassword => _obscureConfirmPassword;
   bool get isLoggedIn => _isLoggedIn;
 
-  // Form validation
   String? validateEmail(String? value) => Validators.validateEmail(value);
   String? validatePassword(String? value) => Validators.validatePassword(value);
   String? validateFullName(String? value) =>
@@ -88,34 +85,28 @@ class AuthController with ChangeNotifier {
     notifyListeners();
   }
 
-  // ✅ ADDED: Clear success message
   void clearSuccess() {
     _successMessage = null;
     notifyListeners();
   }
 
-  // ✅ ADDED: Clear all messages
   void clearMessages() {
     _errorMessage = null;
     _successMessage = null;
     notifyListeners();
   }
 
-  // Initialize auth state on app start
   Future<void> initializeAuth() async {
     try {
       print('🔄 Initializing auth state...');
 
-      // Check if user data exists in storage
-      final userDataString = StorageService.getString('user_data');
-      final isLoggedInStored = StorageService.getBool('is_logged_in') ?? false;
+      final userDataString = await StorageService.getString('user_data');
+      final isLoggedInStored = await StorageService.getBool('is_logged_in') ?? false;
 
       if (userDataString != null && userDataString.isNotEmpty && isLoggedInStored) {
-        // User data exists and is logged in
         _isLoggedIn = true;
         print('✅ User is already logged in');
       } else {
-        // No user data or not logged in
         _isLoggedIn = false;
         print('❌ User is not logged in');
       }
@@ -144,7 +135,6 @@ class AuthController with ChangeNotifier {
       final response = await AuthService.login(request);
 
       if (response.success) {
-        // Save login state and user data
         await _saveLoginState(response);
 
         _setSuccess('Login successful! Welcome back.');
@@ -183,7 +173,6 @@ class AuthController with ChangeNotifier {
       final response = await AuthService.signUp(request);
 
       if (response.success) {
-        // Save login state and user data
         await _saveLoginState(response);
 
         _setSuccess('Account created successfully! Welcome to Awan.');
