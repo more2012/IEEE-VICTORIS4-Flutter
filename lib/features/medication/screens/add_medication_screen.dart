@@ -643,6 +643,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
       });
     }
   }
+
   void _saveMedication() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
@@ -654,24 +655,12 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
         if (!hasPermission) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text('Please enable notifications in settings to receive reminders.'),
+              const SnackBar(
+                content: Text('Please enable notifications to receive reminders.'),
                 backgroundColor: Colors.orange,
-                behavior: SnackBarBehavior.floating,
-                action: SnackBarAction(
-                  label: 'Open Settings',
-                  textColor: Colors.white,
-                  onPressed: () {
-                    NotificationService.openAppSettings();
-                  },
-                ),
               ),
             );
           }
-          setState(() {
-            _isLoading = false;
-          });
-          return;
         }
 
         final medication = Medication(
@@ -685,21 +674,26 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
           startDate: DateTime.now(),
         );
 
-        await context.read<MedicationController>().addMedication(medication);
+        final newMedication = await context.read<MedicationController>().addMedication(medication);
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                '${medication.name} added! You\'ll receive reminders at ${_selectedTime.format(context)} for $_durationInDays days.',
+          if (newMedication.severityCheck != null && newMedication.severityCheck!.isNotEmpty) {
+            _showInteractionWarningDialog(newMedication.severityCheck!);
+            // The screen will be popped when the user dismisses the dialog.
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  '${newMedication.name} added successfully!',
+                ),
+                backgroundColor: Colors.green,
+                behavior: SnackBarBehavior.floating,
+                duration: const Duration(seconds: 4),
               ),
-              backgroundColor: Colors.green,
-              behavior: SnackBarBehavior.floating,
-              duration: const Duration(seconds: 4),
-            ),
-          );
-
-          Navigator.pop(context);
+            );
+            // The screen should only be popped here if no warning is shown.
+            Navigator.pop(context);
+          }
         }
       } catch (e) {
         if (mounted) {
@@ -719,6 +713,84 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
         }
       }
     }
+  }
+
+  void _showInteractionWarningDialog(List<dynamic> interactions) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        titlePadding: const EdgeInsets.all(16),
+        contentPadding: const EdgeInsets.all(16),
+        title: Row(
+          children: const [
+            Icon(Icons.warning_amber_rounded, color: Colors.red, size: 32),
+            SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Drug Interaction Warning',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.red,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+        content: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.5, // نصف الشاشة
+            maxWidth: MediaQuery.of(context).size.width * 0.9, // العرض
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '⚠️ The medication you are adding has a potential interaction with other medications you are taking:',
+                  style: TextStyle(fontSize: 16),
+                ),
+                const SizedBox(height: 12),
+                ...interactions.map((interaction) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Text(
+                      '• Interaction with ${interaction['with']}:\n${interaction['severity']}',
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                  );
+                }).toList(),
+                const SizedBox(height: 12),
+                const Text(
+                  'Please consult a healthcare professional before taking this medication.',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    color: Colors.red,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              Navigator.of(context).pop();
+            },
+            child: const Text(
+              'OK',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
 

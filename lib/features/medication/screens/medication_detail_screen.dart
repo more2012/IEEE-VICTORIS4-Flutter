@@ -23,9 +23,9 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
   String _interactions = '';
 
   //Gemini API key
-  static const String _apiKey = 'AIzaSyDmd8_Z9KEODppuEDk6Xfeh-YO7F25CfhU';
+  static const String _apiKey = 'AIzaSyCiesWCBdEle03bZG7Vf491t2KgiYyKCnY';
   static const String _apiUrl =
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
   @override
   void initState() {
@@ -102,7 +102,8 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                Color(0xff0284C7).withOpacity(0.8)
+                Color(0xff0284C7),
+                Color(0xff0284C7).withOpacity(0.9)
               ],
             ),
           ),

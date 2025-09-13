@@ -13,6 +13,7 @@ class Medication {
   final bool isTaken;
   final DateTime? nextDoseTime;
   final String frequency;
+  final List<dynamic>? severityCheck; // ADD THIS LINE
 
   Medication({
     required this.id,
@@ -27,6 +28,7 @@ class Medication {
     this.isTaken = false,
     this.nextDoseTime,
     this.frequency = 'Daily',
+    this.severityCheck, // ADD THIS LINE
   }) :
         startDate = startDate ?? DateTime.now(),
         doseTaken = doseTaken ?? {};
@@ -103,6 +105,7 @@ class Medication {
     bool? isTaken,
     DateTime? nextDoseTime,
     String? frequency,
+    List<dynamic>? severityCheck,
   }) {
     return Medication(
       id: id ?? this.id,
@@ -117,6 +120,7 @@ class Medication {
       isTaken: isTaken ?? this.isTaken,
       nextDoseTime: nextDoseTime ?? this.nextDoseTime,
       frequency: frequency ?? this.frequency,
+      severityCheck: severityCheck ?? this.severityCheck, // ADD THIS LINE
     );
   }
 
@@ -169,6 +173,7 @@ class Medication {
           : DateTime.now(),
       doseTaken: Map<String, bool>.from(json['dose_taken'] ?? {}),
       isTaken: json['is_taken'] ?? false,
+      severityCheck: json['severity_check'],
     );
   }
 }

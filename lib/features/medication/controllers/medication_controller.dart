@@ -18,7 +18,6 @@ class MedicationController with ChangeNotifier {
     await NotificationService.initialize();
   }
 
-  // Fetch all medications from the backend
   Future<void> fetchMedications() async {
     try {
       final response = await ApiService.get('/drugs/');
@@ -37,7 +36,7 @@ class MedicationController with ChangeNotifier {
     return id.toString();
   }
 
-  Future<void> addMedication(Medication medication) async {
+  Future<Medication> addMedication(Medication medication) async {
     try {
       final response = await ApiService.post('/drugs/', medication.toJson());
       print(medication.toJson());
@@ -46,6 +45,7 @@ class MedicationController with ChangeNotifier {
       await NotificationService.scheduleMedicationNotifications(newMedication);
       notifyListeners();
       print('✅ Added medication to backend: ${newMedication.name}');
+      return newMedication;
     } catch (e) {
       print('⚠️ Error adding medication: $e');
       throw Exception('Failed to add medication');
@@ -73,7 +73,6 @@ class MedicationController with ChangeNotifier {
       final updatedMedication = medication.markDoseTaken(date, doseNumber, !currentStatus);
 
       try {
-        // ✅ FIXED: Send the full medication object in the PUT request
         await ApiService.put('/drugs/$id/', updatedMedication.toJson());
         _medications[index] = updatedMedication;
         notifyListeners();

@@ -17,9 +17,9 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   bool _isLoading = false;
 
   //Gemini API key
-  static const String _apiKey = 'AIzaSyDmd8_Z9KEODppuEDk6Xfeh-YO7F25CfhU';
+  static const String _apiKey = 'AIzaSyCiesWCBdEle03bZG7Vf491t2KgiYyKCnY';
   static const String _apiUrl =
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
   @override
   void initState() {
