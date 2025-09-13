@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
 import 'dart:convert';
+import 'dart:async';
 import '../models/medication_model.dart';
+import '../controllers/medication_controller.dart';
 
 class MedicationDetailScreen extends StatefulWidget {
   final Medication medication;
@@ -81,10 +84,10 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
 
   Widget _buildAppBar() {
     return SliverAppBar(
-      expandedHeight: 60,
+      expandedHeight: 50,
       floating: false,
       pinned: true,
-      backgroundColor: _getMedicationColor(),
+      backgroundColor:  Color(0xff0284C7),
       flexibleSpace: FlexibleSpaceBar(
         title: Text(
           widget.medication.name,
@@ -99,8 +102,7 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                _getMedicationColor(),
-                _getMedicationColor().withOpacity(0.8),
+                 Color(0xff0284C7).withOpacity(0.8)
               ],
             ),
           ),
@@ -238,9 +240,8 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
       ),
       child: Column(
         mainAxisSize:
-        MainAxisSize.min, // ✅ FIXED: Prevent unnecessary expansion
+        MainAxisSize.min,
         children: [
-          // ✅ FIXED: Icon with consistent circle background
           Container(
             width: 40,
             height: 40,
@@ -251,41 +252,39 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
             child: Icon(
               icon,
               color: color,
-              size: 20, // ✅ FIXED: Consistent icon size
+              size: 20,
             ),
           ),
           const SizedBox(height: 8),
 
-          // ✅ FIXED: Value text with proper constraints
           FittedBox(
             fit: BoxFit.scaleDown,
             child: Text(
               value,
               style: const TextStyle(
-                fontSize: 18, // ✅ FIXED: Increased font size
+                fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: Colors.black87,
               ),
               textAlign: TextAlign.center,
-              maxLines: 1, // ✅ FIXED: Force single line
+              maxLines: 1,
             ),
           ),
           const SizedBox(height: 4),
 
-          // ✅ FIXED: Title text with proper constraints
           FittedBox(
             fit: BoxFit.scaleDown,
             child: Text(
               title,
               style: TextStyle(
-                fontSize: 12, // ✅ FIXED: Smaller, consistent title size
+                fontSize: 12,
                 color: Colors.grey.shade600,
                 fontWeight: FontWeight.w500,
               ),
               textAlign: TextAlign.center,
-              maxLines: 1, // ✅ FIXED: Force single line
+              maxLines: 1,
               overflow:
-              TextOverflow.ellipsis, // ✅ FIXED: Add ellipsis as backup
+              TextOverflow.ellipsis,
             ),
           ),
         ],
@@ -433,7 +432,6 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
           ),
           const SizedBox(height: 12),
 
-          // ✅ FIXED: Consistent layout for action buttons
           Row(
             children: [
               Expanded(
@@ -521,7 +519,6 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
             children: [
               Icon(Icons.warning, color: Colors.red),
               const SizedBox(width: 8),
-              // ✅ FIXED: Text overflow in dialog title
               Expanded(
                 child: const Text('Delete Medication'),
               ),
@@ -539,17 +536,27 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
               child: Text('Cancel', style: TextStyle(color: Colors.grey)),
             ),
             ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      '${widget.medication.name} deleted successfully',
+              onPressed: () async {
+                // ✅ FIXED: Call the backend API to delete the medication
+                try {
+                  await context.read<MedicationController>().removeMedication(widget.medication.id);
+                  Navigator.of(context).pop(); // Close dialog
+                  Navigator.of(context).pop(); // Go back to previous screen
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('${widget.medication.name} deleted successfully'),
+                      backgroundColor: Colors.red,
                     ),
-                    backgroundColor: Colors.red,
-                  ),
-                );
+                  );
+                } catch (e) {
+                  Navigator.of(context).pop(); // Close dialog
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to delete medication: ${e.toString()}'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
@@ -569,13 +576,13 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
   Color _getMedicationColor() {
     switch (widget.medication.type.toLowerCase()) {
       case 'tablet':
-        return Colors.blue;
+        return Colors.yellow;
       case 'capsule':
         return Colors.green;
       case 'drop':
         return Colors.cyan;
       case 'injection':
-        return Colors.red;
+        return Color(0xff6A1B9A);
       default:
         return Colors.blue;
     }

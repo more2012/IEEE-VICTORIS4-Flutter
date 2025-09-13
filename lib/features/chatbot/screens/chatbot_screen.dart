@@ -46,7 +46,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Medical Chatbot', style: TextStyle(fontSize: 16,color: Colors.black)),
+                Text('3awn Chatbot', style: TextStyle(fontSize: 16,color: Colors.black)),
                 Text(
                   'Powered by Gemini AI',
                   style: TextStyle(fontSize: 10, color: Colors.grey),

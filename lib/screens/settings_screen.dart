@@ -240,16 +240,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _showHelpDialog();
             },
           ),
-          const Divider(height: 1),
-          _buildSettingsTile(
-            icon: Icons.bug_report_outlined,
-            title: 'Debug Info',
-            subtitle: 'View app debug information',
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              _showDebugInfo();
-            },
-          ),
+          // const Divider(height: 1),
+          // _buildSettingsTile(
+          //   icon: Icons.bug_report_outlined,
+          //   title: 'Debug Info',
+          //   subtitle: 'View app debug information',
+          //   trailing: const Icon(Icons.chevron_right),
+          //   onTap: () {
+          //     _showDebugInfo();
+          //   },
+          // ),
         ],
       ),
     );
@@ -501,44 +501,45 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  void _showDebugInfo() async {
-    final pendingNotifications = await NotificationService.getPendingNotifications();
 
-    if (!mounted) return;
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Debug Information'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Storage Keys: ${StorageService.getStorageSize()}'),
-              const SizedBox(height: 8),
-              Text('Pending Notifications: ${pendingNotifications.length}'),
-              const SizedBox(height: 8),
-              Text('User Logged In: ${context.read<AuthController>().isLoggedIn}'),
-              const SizedBox(height: 8),
-              const Text('Tap "Show Details" for more info.'),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              StorageService.debugPrintAllData();
-              Navigator.pop(context);
-            },
-            child: const Text('Show Details'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
+  // void _showDebugInfo() async {
+  //   final pendingNotifications = await NotificationService.getPendingNotifications();
+  //
+  //   if (!mounted) return;
+  //
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) => AlertDialog(
+  //       title: const Text('Debug Information'),
+  //       content: SingleChildScrollView(
+  //         child: Column(
+  //           mainAxisSize: MainAxisSize.min,
+  //           crossAxisAlignment: CrossAxisAlignment.start,
+  //           children: [
+  //             Text('Storage Keys: ${StorageService.getStorageSize()}'),
+  //             const SizedBox(height: 8),
+  //             Text('Pending Notifications: ${pendingNotifications.length}'),
+  //             const SizedBox(height: 8),
+  //             Text('User Logged In: ${context.read<AuthController>().isLoggedIn}'),
+  //             const SizedBox(height: 8),
+  //             const Text('Tap "Show Details" for more info.'),
+  //           ],
+  //         ),
+  //       ),
+  //       actions: [
+  //         TextButton(
+  //           onPressed: () {
+  //             StorageService.debugPrintAllData();
+  //             Navigator.pop(context);
+  //           },
+  //           child: const Text('Show Details'),
+  //         ),
+  //         TextButton(
+  //           onPressed: () => Navigator.pop(context),
+  //           child: const Text('Close'),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 }

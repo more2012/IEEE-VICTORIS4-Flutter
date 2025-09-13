@@ -1,3 +1,5 @@
+import 'package:awan/screens/settings_screen.dart';
+import 'package:awan/screens/sos_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:convert';
@@ -6,9 +8,9 @@ import 'package:date_picker_timeline/date_picker_timeline.dart';
 import '../features/medication/controllers/medication_controller.dart';
 import '../features/medication/screens/add_medication_screen.dart';
 import '../features/chatbot/screens/chatbot_screen.dart';
-import '../features/sos/screens/sos_screen.dart';
 import '../services/storage_service.dart';
 import '../core/constants/app_constants.dart';
+import 'profile_screen.dart';
 
 class Homepage extends StatefulWidget {
   const Homepage({super.key});
@@ -31,7 +33,7 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     _loadUserData();
-    _loadMedications(); // ✅ FIXED: Load medications on app start
+    _loadMedications();
 
     _animationController = AnimationController(
       duration: const Duration(seconds: 4),
@@ -62,7 +64,6 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
     }
   }
 
-  // ✅ NEW: Added method to fetch medications from backend
   void _loadMedications() {
     context.read<MedicationController>().fetchMedications();
   }
@@ -128,7 +129,7 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
           _buildHomeContent(),
           _buildMedicationsContent(),
           const SOSScreen(),
-          _buildProfileContent(),
+          const SettingsScreen(),
         ],
       ),
     );
@@ -151,7 +152,7 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
                 ),
                 child: ConstrainedBox(
                   constraints: BoxConstraints(
-                    minHeight: availableHeight - 120, // Account for bottom navigation
+                    minHeight: availableHeight - 120,
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -161,7 +162,7 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
                       _buildQuickActions(),
                       const SizedBox(height: 16),
                       _buildUpcomingMedications(),
-                      const SizedBox(height: 100), // Fixed space for floating button
+                      const SizedBox(height: 100),
                     ],
                   ),
                 ),
@@ -212,12 +213,12 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
               ],
             ),
           ),
-          // MODIFIED: Make the profile icon navigate to the profile page
           GestureDetector(
             onTap: () {
-              setState(() {
-                _selectedIndex = 3;
-              });
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ProfileScreen()),
+              );
             },
             child: Container(
               width: screenWidth * 0.15,
@@ -260,12 +261,11 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
               ),
               const SizedBox(height: 8),
 
-              // ✅ FIXED: Constrained date picker to prevent overflow
               Container(
-                height: 90, // Fixed height prevents overflow
+                height: 90,
                 child: DatePicker(
                   DateTime.now().subtract(const Duration(days: 14)),
-                  height: 85, // Slightly smaller than container
+                  height: 85,
                   initialSelectedDate: _selectedDate,
                   selectionColor: const Color(0xff0284C7),
                   selectedTextColor: Colors.white,
@@ -294,10 +294,9 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
         ),
         const SizedBox(height: 20),
 
-        // ✅ FIXED: Responsive button with fixed height
         Container(
           width: double.infinity,
-          height: 50, // Fixed height prevents overflow
+          height: 50,
           decoration: BoxDecoration(
             color: const Color(0xff0284C7),
             borderRadius: BorderRadius.circular(16),
@@ -753,8 +752,8 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
       type: BottomNavigationBarType.fixed,
       currentIndex: _selectedIndex,
       onTap: (index) {
-        if (index == 3) { // MODIFIED: Check for the settings icon index
-          _navigateToSettings(); // MODIFIED: Navigate to settings
+        if (index == 3) {
+          _navigateToSettings();
         } else {
           setState(() => _selectedIndex = index);
         }
@@ -765,7 +764,6 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
         BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
         BottomNavigationBarItem(icon: Icon(Icons.medication), label: 'Medications'),
         BottomNavigationBarItem(icon: Icon(Icons.emergency), label: 'SOS'),
-        // MODIFIED: Change profile icon and label to settings
         BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
       ],
     );

@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:async';
-import '../../../services/api_service.dart';
+import '../services/api_service.dart';
 
 class SOSScreen extends StatefulWidget {
   const SOSScreen({super.key});

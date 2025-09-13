@@ -230,7 +230,6 @@ class MedicationReminderCard extends StatelessWidget {
     );
   }
 
-  // ✅ FIXED: Proper button text logic
   String _getButtonText(bool dateSpecificTaken) {
     if (dateSpecificTaken) {
       return 'Taken';
@@ -243,7 +242,7 @@ class MedicationReminderCard extends StatelessWidget {
       case 'tablet':
         return Icons.medication;
       case 'capsule':
-        return Icons.medical_services;
+        return Icons.vaccines;
       case 'drop':
         return Icons.water_drop;
       case 'injection':
@@ -260,13 +259,13 @@ class MedicationReminderCard extends StatelessWidget {
   Color _getMedicationTypeColor(String type) {
     switch (type.toLowerCase()) {
       case 'tablet':
-        return Colors.blue;
+        return Colors.yellow;
       case 'capsule':
         return Colors.green;
       case 'drop':
         return Colors.cyan;
       case 'injection':
-        return Colors.red;
+        return Color(0xff6A1B9A);
       case 'syrup':
         return Colors.orange;
       case 'inhaler':
