@@ -98,7 +98,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
         widget.type == TextFieldType.confirmPassword) {
       return IconButton(
         icon: Icon(
-          _obscureText ? Icons.visibility_off : Icons.visibility,
+          _obscureText ?  Icons.visibility_off :Icons.visibility  ,
           color: Colors.grey,
         ),
         onPressed: _togglePasswordVisibility,

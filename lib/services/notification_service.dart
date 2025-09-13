@@ -55,6 +55,10 @@ class NotificationService {
     return status.isGranted;
   }
 
+  static Future<void> openAppSettings() async {
+    await openAppSettings();
+  }
+
   static Future<void> scheduleMedicationNotifications(Medication medication) async {
     await _ensureInitialized();
 
@@ -118,7 +122,7 @@ class NotificationService {
 
     final actualTime = NotificationTimeUtil.getDoseTime(selectedTime, doseNumber, medication.timesPerDay);
 
-    final scheduledDateTime = DateTime(
+    DateTime scheduledDateTime = DateTime(
       notificationDate.year,
       notificationDate.month,
       notificationDate.day,
@@ -126,22 +130,25 @@ class NotificationService {
       actualTime.minute,
     );
 
-    if (scheduledDateTime.isAfter(DateTime.now())) {
-      final tz.TZDateTime scheduledTime = tz.TZDateTime.from(scheduledDateTime, tz.local);
-      final doseDesc = NotificationTimeUtil.getDoseDescription(doseNumber, medication.timesPerDay);
-
-      await _notifications.zonedSchedule(
-        safeNotificationId,
-        '💊 Time for your medication!',
-        'Take your ${medication.name} ${medication.dosage}${doseDesc.isNotEmpty ? ' ($doseDesc)' : ''}',
-        scheduledTime,
-        notificationDetails,
-        payload: medication.id,
-        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-      );
-
-      print('⏰ Scheduled: ${medication.name} on ${scheduledDateTime.day}/${scheduledDateTime.month} at ${actualTime.hour}:${actualTime.minute.toString().padLeft(2, '0')}');
+    // If the scheduled time is in the past, schedule it for the next day.
+    if (scheduledDateTime.isBefore(DateTime.now())) {
+      scheduledDateTime = scheduledDateTime.add(const Duration(days: 1));
     }
+
+    final tz.TZDateTime scheduledTime = tz.TZDateTime.from(scheduledDateTime, tz.local);
+    final doseDesc = NotificationTimeUtil.getDoseDescription(doseNumber, medication.timesPerDay);
+
+    await _notifications.zonedSchedule(
+      safeNotificationId,
+      '💊 Time for your medication!',
+      'Take your ${medication.name} ${medication.dosage}${doseDesc.isNotEmpty ? ' ($doseDesc)' : ''}',
+      scheduledTime,
+      notificationDetails,
+      payload: medication.id,
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+    );
+
+    print('⏰ Scheduled: ${medication.name} on ${scheduledDateTime.day}/${scheduledDateTime.month} at ${actualTime.hour}:${actualTime.minute.toString().padLeft(2, '0')}');
   }
 
   static Future<void> cancelMedicationNotifications(String medicationId) async {
@@ -212,7 +219,6 @@ class NavigationService {
   static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 }
 
-// ✅ NEW: A dedicated utility class for time calculations to avoid privacy errors
 class NotificationTimeUtil {
   static TimeOfDay parseTimeString(String timeString) {
     try {

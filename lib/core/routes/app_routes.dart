@@ -7,6 +7,7 @@ import '../../features/auth/screens/otp_verification_screen.dart';
 import '../../features/auth/screens/reset_password_screen.dart';
 import '../../screens/homepage.dart';
 import '../../screens/settings_screen.dart';
+import '../../features/medication_scanner/medication_scanner_screen.dart'; // ADD THIS LINE
 import '../constants/app_constants.dart';
 
 class AppRoutes {
@@ -19,6 +20,7 @@ class AppRoutes {
     AppConstants.otpVerificationRoute: (_) => const OTPVerificationScreen(),
     AppConstants.resetPasswordRoute: (_) => const ResetPasswordScreen(),
     AppConstants.settingsRoute: (_) => const SettingsScreen(),
+    AppConstants.medicationScannerRoute: (_) => const MedicationScannerScreen(), // ADD THIS LINE
   };
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -61,6 +63,11 @@ class AppRoutes {
       case AppConstants.settingsRoute:
         return MaterialPageRoute(
           builder: (_) => const SettingsScreen(),
+          settings: settings,
+        );
+      case AppConstants.medicationScannerRoute: // ADD THIS CASE
+        return MaterialPageRoute(
+          builder: (_) => const MedicationScannerScreen(),
           settings: settings,
         );
       default:

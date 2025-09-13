@@ -18,7 +18,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
   TimeOfDay _selectedTime = const TimeOfDay(hour: 8, minute: 0);
   String _selectedType = 'Tablet';
   int _timesPerDay = 1;
-  int _durationInDays = 7; // ✅ NEW: Duration field
+  int _durationInDays = 7;
   bool _isLoading = false;
 
   final List<String> _medicineTypes = [
@@ -64,7 +64,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                 SizedBox(height: screenHeight * 0.015),
                 _buildFrequency(screenWidth),
                 SizedBox(height: screenHeight * 0.015),
-                _buildDuration(screenWidth), // ✅ NEW: Duration section
+                _buildDuration(screenWidth),
                 SizedBox(height: screenHeight * 0.03),
                 _buildSaveButton(screenWidth),
                 SizedBox(height: screenHeight * 0.02),
@@ -654,12 +654,24 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
         if (!hasPermission) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Please enable notifications to receive reminders.'),
+              SnackBar(
+                content: const Text('Please enable notifications in settings to receive reminders.'),
                 backgroundColor: Colors.orange,
+                behavior: SnackBarBehavior.floating,
+                action: SnackBarAction(
+                  label: 'Open Settings',
+                  textColor: Colors.white,
+                  onPressed: () {
+                    NotificationService.openAppSettings();
+                  },
+                ),
               ),
             );
           }
+          setState(() {
+            _isLoading = false;
+          });
+          return;
         }
 
         final medication = Medication(
@@ -684,14 +696,6 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
               backgroundColor: Colors.green,
               behavior: SnackBarBehavior.floating,
               duration: const Duration(seconds: 4),
-              action: SnackBarAction(
-                label: '',
-                textColor: Colors.white,
-                onPressed: () {
-                  final addedMedication = context.read<MedicationController>().medications.last;
-                  context.read<MedicationController>().testNotification(addedMedication.id);
-                },
-              ),
             ),
           );
 

@@ -29,7 +29,7 @@ class MedicalCard extends StatelessWidget {
         width: double.infinity,
         padding: EdgeInsets.all(screenWidth * 0.04),
         constraints: BoxConstraints(
-          minHeight: screenHeight * 0.15, // Minimum height
+          minHeight: screenHeight * 0.15,
         ),
         decoration: BoxDecoration(
           color: Colors.white,

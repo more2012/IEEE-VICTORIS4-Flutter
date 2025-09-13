@@ -44,7 +44,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor:Color(0xff0284C7),
-        foregroundColor: Colors.black,
+        foregroundColor: Colors.white,
         elevation: 2,
         centerTitle: false,
         title: Text(
@@ -53,13 +53,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
           style: TextStyle(
             fontSize: screenWidth * 0.065,
             fontWeight: FontWeight.bold,
-            color: Colors.black87,
+            color: Colors.white,
           ),
         ),
         actions: [
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: IconButton(
+              color: Colors.white,
               icon: const Icon(Icons.settings, size: 28),
               onPressed: _navigateToSettings,
             ),

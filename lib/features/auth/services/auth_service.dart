@@ -70,7 +70,6 @@ class AuthService {
     }
   }
 
-  // Sign Up
   static Future<AuthResponse> signUp(SignUpRequest request) async {
     try {
       print('🚀 SignUp Request: ${json.encode(request.toJson())}');
@@ -136,7 +135,6 @@ class AuthService {
     }
   }
 
-  // Forgot Password
   static Future<AuthResponse> forgotPassword(
       ForgotPasswordRequest request,
       ) async {
@@ -153,7 +151,6 @@ class AuthService {
     }
   }
 
-  // Verify OTP
   static Future<AuthResponse> verifyOTP(OTPVerificationRequest request) async {
     try {
       final response = await http.post(
@@ -168,7 +165,6 @@ class AuthService {
     }
   }
 
-  // Reset Password
   static Future<AuthResponse> resetPassword(
       ResetPasswordRequest request,
       ) async {
@@ -192,18 +188,15 @@ class AuthService {
     await StorageService.remove('user_data');
   }
 
-  // Check if user is logged in
   static Future<bool> isLoggedIn() async {
     final token = await StorageService.getString('auth_token');
     return token != null && token.isNotEmpty;
   }
 
-  // Get stored token
   static Future<String?> getToken() async {
     return await StorageService.getString('auth_token');
   }
 
-  // ✅ NEW: Refresh an expired token
   static Future<String?> refreshToken() async {
     try {
       final refreshToken = await StorageService.getString('refresh_token');

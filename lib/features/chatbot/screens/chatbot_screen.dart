@@ -28,7 +28,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     _messages.add(
       ChatMessage(
         text:
-            "Hello! I'm your AI medical assistant powered by Google Gemini. I can help you with general health questions, medication information, and wellness tips. How can I assist you today?",
+        "Hello! I'm your AI medical assistant powered by Google Gemini. I can help you with general health questions, medication information, and wellness tips. How can I assist you today?",
         isBot: true,
         timestamp: DateTime.now(),
       ),
@@ -256,12 +256,12 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                   boxShadow: _isLoading
                       ? null
                       : [
-                          BoxShadow(
-                            color: Colors.blue.withOpacity(0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
+                    BoxShadow(
+                      color: Colors.blue.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: Icon(
                   Icons.send,
@@ -307,7 +307,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         _messages.add(
           ChatMessage(
             text:
-                "I apologize, but I'm having trouble connecting to my AI service right now. Please check your internet connection and try again. Error: ${e.toString()}",
+            "I apologize, but I'm having trouble connecting to my AI service right now. Please check your internet connection and try again. Error: ${e.toString()}",
             isBot: true,
             timestamp: DateTime.now(),
           ),
@@ -321,24 +321,24 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
   Future<String> _sendToGemini(String message) async {
     // Retry with exponential backoff for transient errors (e.g., 429/503)
-    const int maxAttempts = 3;
+    const int maxAttempts = 5;
     int attempt = 0;
-    Duration delay = const Duration(milliseconds: 600);
+    Duration delay = const Duration(milliseconds: 1000);
 
     while (true) {
       attempt += 1;
       try {
         final response = await http
             .post(
-              Uri.parse('$_apiUrl?key=$_apiKey'),
-              headers: {'Content-Type': 'application/json'},
-              body: jsonEncode({
-                'contents': [
+          Uri.parse('$_apiUrl?key=$_apiKey'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'contents': [
+              {
+                'parts': [
                   {
-                    'parts': [
-                      {
-                        'text':
-                            '''You are a helpful medical assistant AI. Please provide helpful, accurate, and safe medical information about: "$message"
+                    'text':
+                    '''You are a helpful medical assistant AI. Please provide helpful, accurate, and safe medical information about: "$message"
 
 Important guidelines:
 - Always remind users to consult healthcare professionals for serious concerns
@@ -347,37 +347,37 @@ Important guidelines:
 - If asked about emergency situations, advise to seek immediate medical attention
 - Keep responses clear, concise, and easy to understand
 - Focus on general health education and wellness tips when appropriate''',
-                      },
-                    ],
                   },
                 ],
-                'generationConfig': {
-                  'temperature': 0.7,
-                  'topK': 40,
-                  'topP': 0.95,
-                  'maxOutputTokens': 1024,
-                  'stopSequences': [],
-                },
-                'safetySettings': [
-                  {
-                    'category': 'HARM_CATEGORY_HARASSMENT',
-                    'threshold': 'BLOCK_MEDIUM_AND_ABOVE',
-                  },
-                  {
-                    'category': 'HARM_CATEGORY_HATE_SPEECH',
-                    'threshold': 'BLOCK_MEDIUM_AND_ABOVE',
-                  },
-                  {
-                    'category': 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
-                    'threshold': 'BLOCK_MEDIUM_AND_ABOVE',
-                  },
-                  {
-                    'category': 'HARM_CATEGORY_DANGEROUS_CONTENT',
-                    'threshold': 'BLOCK_MEDIUM_AND_ABOVE',
-                  },
-                ],
-              }),
-            )
+              },
+            ],
+            'generationConfig': {
+              'temperature': 0.7,
+              'topK': 40,
+              'topP': 0.95,
+              'maxOutputTokens': 1024,
+              'stopSequences': [],
+            },
+            'safetySettings': [
+              {
+                'category': 'HARM_CATEGORY_HARASSMENT',
+                'threshold': 'BLOCK_MEDIUM_AND_ABOVE',
+              },
+              {
+                'category': 'HARM_CATEGORY_HATE_SPEECH',
+                'threshold': 'BLOCK_MEDIUM_AND_ABOVE',
+              },
+              {
+                'category': 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+                'threshold': 'BLOCK_MEDIUM_AND_ABOVE',
+              },
+              {
+                'category': 'HARM_CATEGORY_DANGEROUS_CONTENT',
+                'threshold': 'BLOCK_MEDIUM_AND_ABOVE',
+              },
+            ],
+          }),
+        )
             .timeout(const Duration(seconds: 20));
 
         if (response.statusCode == 200) {
@@ -394,7 +394,6 @@ Important guidelines:
           return 'I received your question but couldn\'t process it properly. Please try asking in a different way.';
         }
 
-        // Transient errors: 429 Too Many Requests, 503 Service Unavailable
         if (response.statusCode == 429 || response.statusCode == 503) {
           if (attempt >= maxAttempts) {
             return 'The AI service is busy right now. Please try again in a moment.';
@@ -404,7 +403,6 @@ Important guidelines:
           continue;
         }
 
-        // Other errors
         try {
           final err = jsonDecode(response.body);
           final msg = err['error']?['message'] ?? response.body;
@@ -425,7 +423,6 @@ Important guidelines:
         await Future.delayed(delay);
         delay *= 2;
       } catch (e) {
-        // Unknown error
         return 'Unexpected error while contacting the AI service.';
       }
     }

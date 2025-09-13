@@ -169,7 +169,6 @@ class MedicationReminderCard extends StatelessWidget {
             ),
             SizedBox(width: screenWidth * 0.02),
 
-            // ✅ FIXED: Working button with proper functionality and non-clickable state in medication screen
             if (!isCompletelyFinished)
               GestureDetector(
                 onTap: isInMedicationScreen ? null : onComplete,

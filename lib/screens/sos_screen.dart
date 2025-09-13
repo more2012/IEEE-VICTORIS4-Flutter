@@ -23,7 +23,6 @@ class _SOSScreenState extends State<SOSScreen> with TickerProviderStateMixin {
 
   List<EmergencyContact> _emergencyContacts = [];
 
-  // Default emergency services contact
   final EmergencyContact _defaultEmergency = EmergencyContact(
     name: 'Emergency Services',
     number: '123',
@@ -788,7 +787,7 @@ class EmergencyContact {
       name: json['name'] ?? '',
       number: json['number'] ?? '',
       relationship: json['relationship'] ?? 'Other',
-      isDefault: json['is_default'] ?? false, // ✅ FIXED: Mismatch between backend and frontend key name
+      isDefault: json['is_default'] ?? false,
     );
   }
 
@@ -797,7 +796,7 @@ class EmergencyContact {
       'name': name,
       'number': number,
       'relationship': relationship,
-      'is_default': isDefault, // ✅ FIXED: Mismatch between backend and frontend key name
+      'is_default': isDefault,
     };
   }
 }

@@ -14,7 +14,6 @@ class ApiService {
     final response = await request(token!);
 
     if (response.statusCode == 200 || response.statusCode == 201) {
-      // ✅ FIXED: Return dynamic type to handle both Map and List responses
       return json.decode(response.body);
     } else if (response.statusCode == 401 && retries == 0) {
       print('⚠️ Token expired, attempting to refresh...');

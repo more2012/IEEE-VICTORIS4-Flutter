@@ -17,7 +17,6 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   @override
   void initState() {
     super.initState();
-    // Set email and OTP from arguments
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final args =
           ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
@@ -56,7 +55,6 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 const Icon(Icons.security, size: 80, color: Colors.blue),
                 const SizedBox(height: 20),
 
-                // Title
                 const Text(
                   'Reset Password',
                   style: TextStyle(
@@ -68,7 +66,6 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 ),
                 const SizedBox(height: 8),
 
-                // Subtitle
                 const Text(
                   'Enter your new password below',
                   style: TextStyle(fontSize: 16, color: Colors.grey),
@@ -76,7 +73,6 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 ),
                 const SizedBox(height: 40),
 
-                // New Password Field
                 CustomTextField(
                   controller: context
                       .read<AuthController>()
@@ -88,7 +84,6 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // Confirm Password Field
                 CustomTextField(
                   controller: context
                       .read<AuthController>()
@@ -102,7 +97,6 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 ),
                 const SizedBox(height: 32),
 
-                // Reset Password Button
                 Consumer<AuthController>(
                   builder: (context, controller, child) {
                     return ElevatedButton(

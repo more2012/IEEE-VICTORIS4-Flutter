@@ -102,7 +102,7 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                 Color(0xff0284C7).withOpacity(0.8)
+                Color(0xff0284C7).withOpacity(0.8)
               ],
             ),
           ),
@@ -628,17 +628,24 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
   }
 
   Future<Map<String, String>> _getDrugInfoFromAI(String medicationName) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$_apiUrl?key=$_apiKey'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'contents': [
-            {
-              'parts': [
-                {
-                  'text':
-                  '''Please provide comprehensive information about the medication "$medicationName". 
+    const int maxAttempts = 5;
+    int attempt = 0;
+    Duration delay = const Duration(seconds: 2);
+
+    while (attempt < maxAttempts) {
+      attempt++;
+      try {
+        final response = await http
+            .post(
+          Uri.parse('$_apiUrl?key=$_apiKey'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'contents': [
+              {
+                'parts': [
+                  {
+                    'text':
+                    '''Please provide comprehensive information about the medication "$medicationName". 
 
 Structure your response as follows:
 1. GENERAL: General information about this medication, what it's used for, and how it works
@@ -647,38 +654,48 @@ Structure your response as follows:
 4. INTERACTIONS: Important drug interactions and precautions
 
 Please keep each section informative but concise. Include important safety information.''',
-                },
-              ],
+                  },
+                ],
+              },
+            ],
+            'generationConfig': {
+              'temperature': 0.3,
+              'topK': 40,
+              'topP': 0.95,
+              'maxOutputTokens': 2048,
             },
-          ],
-          'generationConfig': {
-            'temperature': 0.3,
-            'topK': 40,
-            'topP': 0.95,
-            'maxOutputTokens': 2048,
-          },
-          'safetySettings': [
-            {
-              'category': 'HARM_CATEGORY_DANGEROUS_CONTENT',
-              'threshold': 'BLOCK_MEDIUM_AND_ABOVE',
-            },
-          ],
-        }),
-      );
+            'safetySettings': [
+              {
+                'category': 'HARM_CATEGORY_DANGEROUS_CONTENT',
+                'threshold': 'BLOCK_MEDIUM_AND_ABOVE',
+              },
+            ],
+          }),
+        )
+            .timeout(const Duration(seconds: 20));
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
 
-        if (data['candidates'] != null && data['candidates'].isNotEmpty) {
-          final text = data['candidates'][0]['content']['parts'][0]['text'];
-          return _parseAIResponse(text);
+          if (data['candidates'] != null && data['candidates'].isNotEmpty) {
+            final text = data['candidates'][0]['content']['parts'][0]['text'];
+            return _parseAIResponse(text);
+          }
+        } else if (response.statusCode == 429 || response.statusCode == 503) {
+          print('API busy. Retrying in ${delay.inSeconds} seconds...');
+          await Future.delayed(delay);
+          delay *= 2;
+        } else {
+          throw Exception('Failed with status code: ${response.statusCode}');
         }
+      } catch (e) {
+        print('AI request failed: $e. Retrying...');
+        await Future.delayed(delay);
+        delay *= 2;
       }
-
-      throw Exception('Failed to get AI response');
-    } catch (e) {
-      throw Exception('AI request failed: $e');
     }
+
+    throw Exception('Failed to get AI response after multiple attempts.');
   }
 
   Map<String, String> _parseAIResponse(String text) {

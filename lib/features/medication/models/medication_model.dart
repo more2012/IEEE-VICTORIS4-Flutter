@@ -148,12 +148,9 @@ class Medication {
       'dosage': dosage,
       'time': '$time:00',
       'type': type,
-      // ✅ FIXED: Using snake_case for backend compatibility
       'times_per_day': timesPerDay,
       'duration_in_days': durationInDays,
-      // ✅ FIXED: Formatting startDate to 'YYYY-MM-DD'
       'start_date': '${startDate.year}-${startDate.month.toString().padLeft(2, '0')}-${startDate.day.toString().padLeft(2, '0')}',
-      // The backend expects a list, so we'll adjust here if needed, but for now we'll stick to a map
       'dose_taken': doseTaken,
     };
   }
@@ -165,15 +162,11 @@ class Medication {
       dosage: json['dosage'] ?? '',
       time: (json['time'] as String?)?.substring(0, 5) ?? '',
       type: json['type'] ?? 'Tablet',
-      // ✅ FIXED: Parsing from snake_case key
       timesPerDay: json['times_per_day'] ?? 1,
-      // ✅ FIXED: Parsing from snake_case key
       durationInDays: json['duration_in_days'] ?? 7,
-      // ✅ FIXED: Parsing from snake_case key
       startDate: json['start_date'] != null
           ? DateTime.parse(json['start_date'])
           : DateTime.now(),
-      // ✅ FIXED: Parsing from snake_case key
       doseTaken: Map<String, bool>.from(json['dose_taken'] ?? {}),
       isTaken: json['is_taken'] ?? false,
     );

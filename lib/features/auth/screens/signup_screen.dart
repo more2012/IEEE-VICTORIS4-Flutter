@@ -34,7 +34,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
               children: [
                 const SizedBox(height: 20),
 
-                // Title
                 const Text(
                   'Create Your Account',
                   style: TextStyle(
@@ -46,7 +45,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 const SizedBox(height: 8),
 
-                // Subtitle
                 const Text(
                   'Join Awan and take control of your health',
                   style: TextStyle(fontSize: 16, color: Colors.grey),
@@ -54,7 +52,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 const SizedBox(height: 40),
 
-                // Name Field
                 CustomTextField(
                   controller: context.read<AuthController>().fullNameController,
                   labelText: 'Full Name',
@@ -63,7 +60,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // Email Field
                 CustomTextField(
                   controller: context.read<AuthController>().emailController,
                   labelText: 'Email',
@@ -72,16 +68,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // Phone Field (Optional)
                 CustomTextField(
                   controller: context.read<AuthController>().phoneController,
-                  labelText: 'Phone Number (Optional)',
+                  labelText: 'Phone Number',
                   type: TextFieldType.phone,
                   validator: context.read<AuthController>().validatePhone,
                 ),
                 const SizedBox(height: 20),
 
-                // Password Field
                 CustomTextField(
                   controller: context.read<AuthController>().passwordController,
                   labelText: 'Password',
@@ -90,7 +84,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // Confirm Password Field
                 CustomTextField(
                   controller: context
                       .read<AuthController>()
@@ -103,7 +96,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 const SizedBox(height: 32),
 
-                // Sign Up Button
                 Consumer<AuthController>(
                   builder: (context, controller, child) {
                     return ElevatedButton(
@@ -163,7 +155,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ],
                 ),
 
-                // Error/Success Messages
                 Consumer<AuthController>(
                   builder: (context, controller, child) {
                     if (controller.errorMessage != null) {

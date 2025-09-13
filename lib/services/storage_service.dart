@@ -8,7 +8,6 @@ class StorageService {
     print('✅ Storage Service initialized');
   }
 
-  // String operations
   static Future<bool> setString(String key, String value) async {
     try {
       return await _prefs?.setString(key, value) ?? false;
@@ -27,7 +26,6 @@ class StorageService {
     }
   }
 
-  // ✅ NEW: Boolean operations
   static Future<bool> setBool(String key, bool value) async {
     try {
       return await _prefs?.setBool(key, value) ?? false;
@@ -46,7 +44,6 @@ class StorageService {
     }
   }
 
-  // ✅ NEW: Integer operations
   static Future<bool> setInt(String key, int value) async {
     try {
       return await _prefs?.setInt(key, value) ?? false;
@@ -65,7 +62,6 @@ class StorageService {
     }
   }
 
-  // ✅ NEW: Double operations
   static Future<bool> setDouble(String key, double value) async {
     try {
       return await _prefs?.setDouble(key, value) ?? false;
@@ -84,7 +80,6 @@ class StorageService {
     }
   }
 
-  // ✅ NEW: String list operations
   static Future<bool> setStringList(String key, List<String> value) async {
     try {
       return await _prefs?.setStringList(key, value) ?? false;
@@ -103,7 +98,6 @@ class StorageService {
     }
   }
 
-  // ✅ NEW: Remove operations
   static Future<bool> remove(String key) async {
     try {
       return await _prefs?.remove(key) ?? false;
@@ -113,7 +107,6 @@ class StorageService {
     }
   }
 
-  // ✅ NEW: Clear all data
   static Future<bool> clear() async {
     try {
       return await _prefs?.clear() ?? false;
@@ -123,7 +116,6 @@ class StorageService {
     }
   }
 
-  // ✅ NEW: Check if key exists
   static bool containsKey(String key) {
     try {
       return _prefs?.containsKey(key) ?? false;
@@ -133,7 +125,6 @@ class StorageService {
     }
   }
 
-  // ✅ NEW: Get all keys
   static Set<String> getAllKeys() {
     try {
       return _prefs?.getKeys() ?? <String>{};
@@ -143,7 +134,6 @@ class StorageService {
     }
   }
 
-  // ✅ NEW: Get storage size info
   static int getStorageSize() {
     try {
       final keys = getAllKeys();
@@ -154,7 +144,7 @@ class StorageService {
     }
   }
 
-  // ✅ NEW: Debug method to print all stored data
+  // Debug method to print all stored data
   static void debugPrintAllData() {
     try {
       final keys = getAllKeys();

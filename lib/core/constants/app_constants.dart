@@ -12,6 +12,7 @@ class AppConstants {
   static const String otpVerificationRoute = '/otp-verification';
   static const String resetPasswordRoute = '/reset-password';
   static const String settingsRoute = '/settings';
+  static const String medicationScannerRoute = '/medication-scanner'; // ADD THIS LINE
 
   // Assets
   static const String onboardingImage1 = 'assets/logos/image 1.png';

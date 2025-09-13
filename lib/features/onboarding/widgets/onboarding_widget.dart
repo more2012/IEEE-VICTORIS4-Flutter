@@ -12,7 +12,6 @@ class OnboardingWidget extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Illustration
           Expanded(
             flex: 3,
             child: Center(
@@ -26,7 +25,6 @@ class OnboardingWidget extends StatelessWidget {
 
           const SizedBox(height: 40),
 
-          // Title
           Text(
             item.title,
             style: const TextStyle(
@@ -40,7 +38,6 @@ class OnboardingWidget extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          // Subtitle
           Text(
             item.subtitle,
             style: const TextStyle(

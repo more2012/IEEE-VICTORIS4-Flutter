@@ -9,7 +9,7 @@ import 'features/onboarding/screens/on_boarding_screen.dart';
 import 'core/theme/app_theme.dart';
 import 'core/constants/app_constants.dart';
 import 'services/notification_service.dart';
-import 'screens/homepage.dart'; // ✅ NEW: Import homepage
+import 'screens/homepage.dart';
 
 class App extends StatelessWidget {
   const App({super.key});
@@ -27,7 +27,6 @@ class App extends StatelessWidget {
   }
 }
 
-// ✅ NEW: Separate AppView to access providers
 class AppView extends StatefulWidget {
   const AppView({super.key});
 
@@ -44,21 +43,13 @@ class _AppViewState extends State<AppView> {
     _initializeApp();
   }
 
-  // ✅ NEW: Initialize app and check login state
   Future<void> _initializeApp() async {
     try {
       print('🚀 Initializing app...');
-
-      // Initialize auth controller
       final authController = context.read<AuthController>();
       await authController.initializeAuth();
-
-      // Initialize notification service
       await NotificationService.initialize();
-
       print('✅ App initialization complete');
-
-      // Remove splash screen
       FlutterNativeSplash.remove();
 
     } catch (e) {
@@ -116,11 +107,9 @@ class _AppViewState extends State<AppView> {
           title: 'Awan',
           theme: AppTheme.lightTheme,
           debugShowCheckedModeBanner: false,
-
-          // ✅ NEW: Dynamic home based on login state
           home: authController.isLoggedIn
-              ? const Homepage()  // Go directly to homepage if logged in
-              : const OnBoardingScreen(), // Show onboarding if not logged in
+              ? const Homepage()
+              : const OnBoardingScreen(),
 
           routes: AppRoutes.routes,
           onGenerateRoute: AppRoutes.generateRoute,

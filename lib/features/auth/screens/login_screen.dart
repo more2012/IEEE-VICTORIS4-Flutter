@@ -28,7 +28,6 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 const SizedBox(height: 60),
 
-                // Logo/Icon
                 const Icon(
                   Icons.medical_services,
                   size: 80,
@@ -36,7 +35,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // Title
                 const Text(
                   'Welcome Back!',
                   style: TextStyle(
@@ -48,7 +46,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 8),
 
-                // Subtitle
                 const Text(
                   'Sign in to continue to 3wan',
                   style: TextStyle(fontSize: 16, color: Colors.grey),
@@ -56,7 +53,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 40),
 
-                // Email Field
                 CustomTextField(
                   controller: context.read<AuthController>().emailController,
                   labelText: 'Email',
@@ -65,7 +61,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // Password Field
                 CustomTextField(
                   controller: context.read<AuthController>().passwordController,
                   labelText: 'Password',
@@ -74,7 +69,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 8),
 
-                // Forgot Password
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
@@ -132,7 +126,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Sign Up Link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -146,7 +139,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                 ),
 
-                // Error/Success Messages
                 Consumer<AuthController>(
                   builder: (context, controller, child) {
                     if (controller.errorMessage != null) {

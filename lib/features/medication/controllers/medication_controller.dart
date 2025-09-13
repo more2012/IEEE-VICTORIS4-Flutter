@@ -85,7 +85,6 @@ class MedicationController with ChangeNotifier {
     }
   }
 
-  // ✅ LEGACY: Kept for backwards compatibility
   void toggleMedicationTaken(String id, [DateTime? date]) {
     final targetDate = date ?? DateTime.now();
     toggleMedicationDose(id, targetDate, 1);

@@ -35,13 +35,11 @@ class OnBoardingScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // Status Bar and Navigation
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Back button (only show if not first page)
                   controller.currentPageIndex > 0
                       ? IconButton(
                           onPressed: () => controller.previousPage(),
@@ -52,7 +50,6 @@ class OnBoardingScreen extends StatelessWidget {
                         )
                       : const SizedBox(width: 40),
 
-                  // Skip button (only show if not last page)
                   if (!controller.isLastPage)
                     TextButton(
                       onPressed: () =>

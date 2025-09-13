@@ -60,7 +60,6 @@ class AuthController with ChangeNotifier {
     return validatePassword(value);
   }
 
-  // ✅ ADDED: Missing validation method
   String? validateConfirmNewPassword(String? value) {
     if (value != newPasswordController.text) {
       return 'Passwords do not match';
@@ -119,7 +118,6 @@ class AuthController with ChangeNotifier {
     }
   }
 
-  // Login method
   Future<bool> login() async {
     if (!_validateLoginForm()) return false;
 
