@@ -1,6 +1,6 @@
+import 'package:awan/features/auth/controllers/auth_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../controllers/auth_controller.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../shared/widgets/custom_text_field.dart';
 
@@ -33,12 +33,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 40),
-
-                // Icon
                 const Icon(Icons.lock_reset, size: 80, color: Colors.blue),
                 const SizedBox(height: 20),
-
-                // Title
                 const Text(
                   'Forgot Password?',
                   style: TextStyle(
@@ -49,16 +45,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
-
-                // Subtitle
                 const Text(
                   'Don\'t worry! Enter your email address and we\'ll send you an OTP to reset your password.',
                   style: TextStyle(fontSize: 16, color: Colors.grey),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 40),
-
-                // Email Field
                 CustomTextField(
                   controller: context.read<AuthController>().emailController,
                   labelText: 'Email Address',
@@ -67,29 +59,26 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   validator: context.read<AuthController>().validateEmail,
                 ),
                 const SizedBox(height: 32),
-
-                // Send OTP Button
                 Consumer<AuthController>(
                   builder: (context, controller, child) {
                     return ElevatedButton(
                       onPressed: controller.isLoading
                           ? null
                           : () async {
-                              if (_formKey.currentState!.validate()) {
-                                final success = await controller
-                                    .forgotPassword();
-                                if (success && mounted) {
-                                  Navigator.pushNamed(
-                                    context,
-                                    '/otp-verification',
-                                    arguments: {
-                                      'email': controller.emailController.text
-                                          .trim(),
-                                    },
-                                  );
-                                }
-                              }
-                            },
+                        if (_formKey.currentState!.validate()) {
+                          controller.clearMessages();
+                          final success = await controller.forgotPassword();
+                          if (success && mounted) {
+                            Navigator.pushNamed(
+                              context,
+                              '/otp_screen',
+                              arguments: {
+                                'email': controller.emailController.text.trim(),
+                              },
+                            );
+                          }
+                        }
+                      },
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
@@ -98,27 +87,26 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       ),
                       child: controller.isLoading
                           ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Colors.white,
-                                ),
-                              ),
-                            )
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
+                        ),
+                      )
                           : const Text(
-                              'Send OTP',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
+                        'Send OTP',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     );
                   },
                 ),
                 const SizedBox(height: 24),
-
                 // Back to Login
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -132,8 +120,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     ),
                   ],
                 ),
-
-                // Error/Success Messages
                 Consumer<AuthController>(
                   builder: (context, controller, child) {
                     if (controller.errorMessage != null) {

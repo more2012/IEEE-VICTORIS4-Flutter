@@ -1,8 +1,8 @@
+import 'package:awan/core/utils/validators.dart';
+import 'package:awan/services/storage_service.dart';
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../models/auth_models.dart';
-import '../../../core/utils/validators.dart';
-import '../../../services/storage_service.dart';
 import 'dart:convert';
 
 class AuthController with ChangeNotifier {
@@ -20,7 +20,7 @@ class AuthController with ChangeNotifier {
   final TextEditingController otpController = TextEditingController();
   final TextEditingController newPasswordController = TextEditingController();
   final TextEditingController confirmPasswordController = TextEditingController();
-  final TextEditingController confirmNewPasswordController = TextEditingController(); // ✅ ADDED: Missing controller
+  final TextEditingController confirmNewPasswordController = TextEditingController();
 
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
@@ -78,17 +78,7 @@ class AuthController with ChangeNotifier {
     notifyListeners();
   }
 
-  // Clear error message
-  void clearError() {
-    _errorMessage = null;
-    notifyListeners();
-  }
-
-  void clearSuccess() {
-    _successMessage = null;
-    notifyListeners();
-  }
-
+  // Clear messages
   void clearMessages() {
     _errorMessage = null;
     _successMessage = null;
@@ -210,7 +200,7 @@ class AuthController with ChangeNotifier {
         return false;
       }
     } catch (e) {
-      _setError('Failed to send reset email: ${e.toString()}');
+      _setError('Failed to send reset email. The server may be unavailable or there was a network error. Please try again.');
       _setLoading(false);
       return false;
     }
@@ -283,26 +273,19 @@ class AuthController with ChangeNotifier {
   // Save login state to SharedPreferences
   Future<void> _saveLoginState(AuthResponse response) async {
     try {
-      // Save login flag
       await StorageService.setBool('is_logged_in', true);
-
-      // Save user data
       if (response.user != null) {
         final userDataJson = json.encode(response.user!.toJson());
         await StorageService.setString('user_data', userDataJson);
         print('✅ User data saved to storage');
       }
-
-      // Save tokens if available
       if (response.tokens != null) {
         await StorageService.setString('access_token', response.tokens!.access);
         await StorageService.setString('refresh_token', response.tokens!.refresh);
         print('✅ Tokens saved to storage');
       }
-
       _isLoggedIn = true;
       print('✅ Login state saved successfully');
-
     } catch (e) {
       print('⚠️ Error saving login state: $e');
     }
@@ -311,20 +294,14 @@ class AuthController with ChangeNotifier {
   // Logout and clear all data
   Future<void> logout() async {
     try {
-      // Clear all stored data
       await StorageService.remove('is_logged_in');
       await StorageService.remove('user_data');
       await StorageService.remove('access_token');
       await StorageService.remove('refresh_token');
-
-      // Reset state
       _isLoggedIn = false;
       _errorMessage = null;
       _successMessage = null;
-
-      // Clear all controllers
       clearControllers();
-
       print('✅ User logged out successfully');
       notifyListeners();
     } catch (e) {
@@ -345,7 +322,6 @@ class AuthController with ChangeNotifier {
     return null;
   }
 
-  // Private helper methods
   void _setLoading(bool loading) {
     _isLoading = loading;
     notifyListeners();
@@ -353,14 +329,13 @@ class AuthController with ChangeNotifier {
 
   void _setError(String error) {
     _errorMessage = error;
-    _successMessage = null; // Clear success when showing error
+    _successMessage = null;
     notifyListeners();
   }
 
-  // ✅ ADDED: Set success message
   void _setSuccess(String success) {
     _successMessage = success;
-    _errorMessage = null; // Clear error when showing success
+    _errorMessage = null;
     notifyListeners();
   }
 
