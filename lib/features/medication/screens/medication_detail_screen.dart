@@ -465,8 +465,8 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
                     icon: const Icon(Icons.refresh, size: 20),
                     label: const Text('Refresh'),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: _getMedicationColor(),
-                      side: BorderSide(color: _getMedicationColor()),
+                      foregroundColor: Colors.green,
+                      side: BorderSide(color: Colors.green),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),

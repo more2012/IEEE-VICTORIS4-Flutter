@@ -51,12 +51,8 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 40),
-
-                // Icon
                 const Icon(Icons.verified_user, size: 80, color: Colors.blue),
                 const SizedBox(height: 20),
-
-                // Title
                 const Text(
                   'Verify OTP',
                   style: TextStyle(
@@ -99,13 +95,13 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                           ? null
                           : () async {
                               final otpCode = _getOTPCode();
-                              if (otpCode.length == 6) {
+                              if (otpCode.length == 4) {
                                 controller.otpController.text = otpCode;
                                 final success = await controller.verifyOTP();
                                 if (success && mounted) {
                                   Navigator.pushNamed(
                                     context,
-                                    '/reset-password',
+                                    '/forgot_password',
                                     arguments: {
                                       'email': controller.emailController.text
                                           .trim(),

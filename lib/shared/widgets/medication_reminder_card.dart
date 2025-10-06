@@ -241,7 +241,7 @@ class MedicationReminderCard extends StatelessWidget {
       case 'tablet':
         return Icons.medication;
       case 'capsule':
-        return Icons.vaccines;
+        return Icons.medical_services_rounded;
       case 'drop':
         return Icons.water_drop;
       case 'injection':
@@ -258,9 +258,9 @@ class MedicationReminderCard extends StatelessWidget {
   Color _getMedicationTypeColor(String type) {
     switch (type.toLowerCase()) {
       case 'tablet':
-        return Colors.yellow;
-      case 'capsule':
         return Colors.green;
+      case 'capsule':
+        return Colors.orange;
       case 'drop':
         return Colors.cyan;
       case 'injection':

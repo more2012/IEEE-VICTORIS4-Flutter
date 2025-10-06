@@ -4,10 +4,12 @@ import 'package:timezone/data/latest.dart' as tz;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/material.dart';
 import '../features/medication/models/medication_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _notifications = FlutterLocalNotificationsPlugin();
   static bool _initialized = false;
+  static const String _lastNotificationIdKey = 'last_notification_id';
 
   static Future<void> initialize() async {
     if (_initialized) return;
@@ -48,15 +50,19 @@ class NotificationService {
     final status = await Permission.notification.request();
 
     if (status.isGranted) {
-      final alarmStatus = await Permission.systemAlertWindow.request();
+      final alarmStatus = await Permission.scheduleExactAlarm.request();
       print('Alarm permission: ${alarmStatus.isGranted}');
     }
 
     return status.isGranted;
   }
 
-  static Future<void> openAppSettings() async {
-    await openAppSettings();
+  static Future<int> _getNextNotificationId() async {
+    final prefs = await SharedPreferences.getInstance();
+    int lastId = prefs.getInt(_lastNotificationIdKey) ?? 0;
+    lastId++;
+    await prefs.setInt(_lastNotificationIdKey, lastId);
+    return lastId;
   }
 
   static Future<void> scheduleMedicationNotifications(Medication medication) async {
@@ -64,19 +70,23 @@ class NotificationService {
 
     await cancelMedicationNotifications(medication.id);
 
-    final selectedTime = NotificationTimeUtil.parseTimeString(medication.time);
+    final baseTime = NotificationTimeUtil.parseTimeString(medication.time);
 
     print('📅 Scheduling notifications for ${medication.name} for ${medication.durationInDays} days');
 
     for (int day = 0; day < medication.durationInDays; day++) {
       final notificationDate = medication.startDate.add(Duration(days: day));
+      if (!medication.isActiveOnDate(notificationDate)) {
+        continue;
+      }
 
       for (int dose = 1; dose <= medication.timesPerDay; dose++) {
+        final notificationId = await _getNextNotificationId();
         await _scheduleSpecificNotification(
+          notificationId,
           medication,
           notificationDate,
-          selectedTime,
-          day,
+          baseTime,
           dose,
         );
       }
@@ -84,14 +94,12 @@ class NotificationService {
   }
 
   static Future<void> _scheduleSpecificNotification(
+      int notificationId,
       Medication medication,
       DateTime notificationDate,
-      TimeOfDay selectedTime,
-      int dayIndex,
+      TimeOfDay baseTime,
       int doseNumber,
       ) async {
-    final notificationId = int.parse(medication.id) * 1000 + dayIndex * 10 + doseNumber;
-    final safeNotificationId = notificationId % 2147483647;
 
     final androidDetails = AndroidNotificationDetails(
       'medication_reminders',
@@ -120,7 +128,7 @@ class NotificationService {
       iOS: iOSDetails,
     );
 
-    final actualTime = NotificationTimeUtil.getDoseTime(selectedTime, doseNumber, medication.timesPerDay);
+    final actualTime = NotificationTimeUtil.getDoseTime(baseTime, doseNumber, medication.timesPerDay);
 
     DateTime scheduledDateTime = DateTime(
       notificationDate.year,
@@ -130,7 +138,6 @@ class NotificationService {
       actualTime.minute,
     );
 
-    // If the scheduled time is in the past, schedule it for the next day.
     if (scheduledDateTime.isBefore(DateTime.now())) {
       scheduledDateTime = scheduledDateTime.add(const Duration(days: 1));
     }
@@ -139,7 +146,7 @@ class NotificationService {
     final doseDesc = NotificationTimeUtil.getDoseDescription(doseNumber, medication.timesPerDay);
 
     await _notifications.zonedSchedule(
-      safeNotificationId,
+      notificationId,
       '💊 Time for your medication!',
       'Take your ${medication.name} ${medication.dosage}${doseDesc.isNotEmpty ? ' ($doseDesc)' : ''}',
       scheduledTime,
@@ -154,10 +161,11 @@ class NotificationService {
   static Future<void> cancelMedicationNotifications(String medicationId) async {
     await _ensureInitialized();
 
-    final baseId = int.parse(medicationId) * 1000;
-    for (int i = 0; i < 180; i++) {
-      final notificationId = (baseId + i) % 2147483647;
-      await _notifications.cancel(notificationId);
+    final pendingNotifications = await _notifications.pendingNotificationRequests();
+    final notificationsToCancel = pendingNotifications.where((p) => p.payload == medicationId);
+
+    for (var notification in notificationsToCancel) {
+      await _notifications.cancel(notification.id);
     }
 
     print('❌ Cancelled notifications for medication: $medicationId');
@@ -197,6 +205,49 @@ class NotificationService {
     print('🔔 Test notification sent for ${medication.name}');
   }
 
+  static Future<void> showMissedDoseNotification(Medication medication, int missedDoses) async {
+    await _ensureInitialized();
+
+    final androidDetails = AndroidNotificationDetails(
+      'missed_dose_alerts',
+      'Missed Dose Alerts',
+      channelDescription: 'Alerts for when you miss multiple medication doses',
+      importance: Importance.max,
+      priority: Priority.max,
+      showWhen: true,
+      enableVibration: true,
+      playSound: true,
+      icon: '@mipmap/ic_launcher',
+      color: Colors.red,
+      ledColor: Colors.red,
+      ledOnMs: 1000,
+      ledOffMs: 500,
+    );
+
+    const iOSDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    final notificationDetails = NotificationDetails(
+      android: androidDetails,
+      iOS: iOSDetails,
+    );
+
+    final notificationId = await _getNextNotificationId();
+
+    await _notifications.show(
+      notificationId,
+      '🚨 Missed Medication Alert!',
+      'You have missed $missedDoses consecutive doses of ${medication.name}. Please take your medication as soon as possible.',
+      notificationDetails,
+      payload: medication.id,
+    );
+
+    print('🔔 Missed dose alert sent for ${medication.name}');
+  }
+
   static Future<List<PendingNotificationRequest>> getPendingNotifications() async {
     await _ensureInitialized();
     return await _notifications.pendingNotificationRequests();
@@ -226,19 +277,11 @@ class NotificationTimeUtil {
       if (parts.length != 2) return const TimeOfDay(hour: 8, minute: 0);
 
       final hourPart = parts[0].trim();
-      final minuteAndPeriod = parts[1].trim().split(' ');
+      final minutePart = parts[1].trim();
 
       int hour = int.parse(hourPart);
-      int minute = int.parse(minuteAndPeriod[0]);
+      int minute = int.parse(minutePart);
 
-      if (minuteAndPeriod.length > 1) {
-        final period = minuteAndPeriod[1].toLowerCase();
-        if (period == 'pm' && hour != 12) {
-          hour += 12;
-        } else if (period == 'am' && hour == 12) {
-          hour = 0;
-        }
-      }
       return TimeOfDay(hour: hour, minute: minute);
     } catch (e) {
       print('Error parsing time: $timeString, using default 8:00 AM');
@@ -250,9 +293,11 @@ class NotificationTimeUtil {
     if (totalDoses == 1) {
       return baseTime;
     } else if (totalDoses == 2) {
+      final interval = 12; // 12 hours between doses
+      final newHour = (baseTime.hour + interval) % 24;
       return (doseNumber == 1)
           ? baseTime
-          : TimeOfDay(hour: (baseTime.hour + 12) % 24, minute: baseTime.minute);
+          : TimeOfDay(hour: newHour, minute: baseTime.minute);
     } else {
       final intervalInMinutes = (24 * 60) ~/ totalDoses;
       final baseMinutes = baseTime.hour * 60 + baseTime.minute;

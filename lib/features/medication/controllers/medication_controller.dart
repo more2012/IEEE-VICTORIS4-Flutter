@@ -3,12 +3,14 @@ import '../models/medication_model.dart';
 import '../../../services/notification_service.dart';
 import '../../../services/api_service.dart';
 import 'dart:convert';
+import 'dart:async';
 
 class MedicationController with ChangeNotifier {
   final List<Medication> _medications = [];
-  int _nextId = 1;
+  final int _missedDoseThreshold = 2; // Threshold for missed doses
 
   List<Medication> get medications => _medications;
+  Timer? _missedDoseTimer;
 
   MedicationController() {
     _initializeNotifications();
@@ -16,6 +18,38 @@ class MedicationController with ChangeNotifier {
 
   Future<void> _initializeNotifications() async {
     await NotificationService.initialize();
+    _startMissedDoseChecker();
+  }
+
+  void _startMissedDoseChecker() {
+    _missedDoseTimer?.cancel();
+    _missedDoseTimer = Timer.periodic(const Duration(hours: 1), (timer) {
+      _checkMissedDosesAndAlert();
+    });
+  }
+
+  Future<void> _checkMissedDosesAndAlert() async {
+    print('🔎 Checking for missed doses...');
+    final today = DateTime.now();
+
+    for (final medication in _medications) {
+      if (!medication.isCompletelyFinished && medication.isActiveOnDate(today)) {
+        int missedDoses = 0;
+        for (int i = 0; i < medication.durationInDays; i++) {
+          final checkDate = today.subtract(Duration(days: i));
+          if (!medication.areAllDosesTakenForDate(checkDate)) {
+            missedDoses++;
+          } else {
+            break;
+          }
+        }
+
+        if (missedDoses >= _missedDoseThreshold) {
+          print('🚨 Missed dose alert triggered for ${medication.name}');
+          await NotificationService.showMissedDoseNotification(medication, missedDoses);
+        }
+      }
+    }
   }
 
   Future<void> fetchMedications() async {
@@ -30,16 +64,22 @@ class MedicationController with ChangeNotifier {
       print('⚠️ Error fetching medications: $e');
     }
   }
-  String _generateSafeId() {
-    final id = _nextId;
-    _nextId++;
-    return id.toString();
-  }
 
   Future<Medication> addMedication(Medication medication) async {
+    // Check for existing medication with the same name before adding
+    final existingMedication = _medications.firstWhere(
+          (m) => m.name.toLowerCase() == medication.name.toLowerCase(),
+      orElse: () => Medication(id: '', name: '', dosage: '', time: ''), // Return a dummy object if not found
+    );
+
+    if (existingMedication.name.isNotEmpty) {
+      // If a medication with the same name exists, return the existing one.
+      // This prevents adding duplicates.
+      return existingMedication;
+    }
+
     try {
       final response = await ApiService.post('/drugs/', medication.toJson());
-      print(medication.toJson());
       final newMedication = Medication.fromJson(response);
       _medications.add(newMedication);
       await NotificationService.scheduleMedicationNotifications(newMedication);
@@ -87,15 +127,6 @@ class MedicationController with ChangeNotifier {
   void toggleMedicationTaken(String id, [DateTime? date]) {
     final targetDate = date ?? DateTime.now();
     toggleMedicationDose(id, targetDate, 1);
-  }
-
-  List<Medication> getUpcomingMedications() {
-    return _medications.take(3).toList();
-  }
-
-  List<Medication> getTodayMedications() {
-    final today = DateTime.now();
-    return _medications.where((med) => med.isActiveOnDate(today)).toList();
   }
 
   List<MedicationDose> getMedicationsByDate(DateTime date) {

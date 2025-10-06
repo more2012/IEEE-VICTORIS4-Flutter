@@ -110,7 +110,7 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
                       height: 28,
                       color: Colors.white,
                     ),
-                    Text('ChatBot',style: TextStyle(color: Colors.white,fontSize: 14),)
+                    Text('3awnBot',style: TextStyle(color: Colors.white,fontSize: 14),)
                   ],
                 ),
               ),
@@ -552,13 +552,13 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
   Color _getMedicationColor(String type) {
     switch (type.toLowerCase()) {
       case 'tablet':
-        return Colors.blue;
-      case 'capsule':
         return Colors.green;
+      case 'capsule':
+        return Colors.orange;
       case 'drop':
         return Colors.cyan;
       case 'injection':
-        return Colors.red;
+        return Color(0xff6A1B9A);
       default:
         return Colors.blue;
     }
