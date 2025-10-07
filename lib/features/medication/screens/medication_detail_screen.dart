@@ -1,3 +1,4 @@
+import 'package:awan/screens/find_alternative_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
@@ -47,6 +48,8 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
                 const SizedBox(height: 8),
                 _buildQuickStats(),
                 const SizedBox(height: 10),
+                // NEW: Alternatives Button added here for better visibility
+                _buildAlternativesButton(),
                 if (_isLoadingInfo) _buildLoadingCard(),
                 if (_drugInfo.isNotEmpty)
                   _buildInfoSection(
@@ -81,6 +84,41 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
       ),
     );
   }
+
+  // New method for the Alternatives button (full width, placed above other actions)
+  Widget _buildAlternativesButton() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      child: SizedBox(
+        width: double.infinity,
+        height: 56,
+        child: ElevatedButton.icon(
+          onPressed: () {
+            // Navigate to FindAlternativeScreen, passing the current medication name
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => FindAlternativeScreen(
+                  initialSearchTerm: widget.medication.name,
+                ),
+              ),
+            );
+          },
+          icon: const Icon(Icons.swap_horiz_rounded, size: 24),
+          label: const Text('Find Alternatives', style: TextStyle(fontSize: 18)),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Color(0xff0284C7),
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            elevation: 8,
+          ),
+        ),
+      ),
+    );
+  }
+
 
   Widget _buildAppBar() {
     return SliverAppBar(

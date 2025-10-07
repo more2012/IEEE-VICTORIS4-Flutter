@@ -1,3 +1,4 @@
+import 'package:awan/screens/find_alternative_screen.dart';
 import 'package:awan/screens/settings_screen.dart';
 import 'package:awan/screens/sos_screen.dart';
 import 'package:flutter/material.dart';
@@ -295,101 +296,36 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
         ),
         const SizedBox(height: 20),
 
-        Row( // Use a Row to place buttons side-by-side
-          children: [
-            Expanded(
-              child: Container(
-                height: 50,
-                decoration: BoxDecoration(
-                  color: const Color(0xff0284C7),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(16),
-                    onTap: _navigateToAddMedication,
-                    child: Center(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            Icons.add,
-                            size: 20,
-                            color: Colors.white,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Add New Medication',
-                            style: TextStyle(
-                              fontSize: screenWidth * 0.03,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              _buildResponsiveButton(
+                label: 'Add New Med',
+                icon: Icons.add,
+                onPressed: _navigateToAddMedication,
               ),
-            ),
-            const SizedBox(width: 10), // Space between buttons
-            Expanded(
-              child: Container(
-                height: 50,
-                decoration: BoxDecoration(
-                  color: const Color(0xff0284C7),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(16),
-                    onTap: () {
-                      Navigator.pushNamed(context, AppConstants.medicationScannerRoute);
-                    },
-                    child: Center(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            Icons.qr_code_scanner,
-                            size: 20,
-                            color: Colors.white,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Scan Medicine',
-                            style: TextStyle(
-                              fontSize: screenWidth * 0.03,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+              _buildResponsiveButton(
+                label: 'Scan Medicine',
+                icon: Icons.qr_code_scanner,
+                onPressed: () {
+                  Navigator.pushNamed(context, AppConstants.medicationScannerRoute);
+                },
               ),
-            ),
-          ],
+              _buildResponsiveButton(
+                label: 'Find Alt',
+                icon: Icons.search,
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const FindAlternativeScreen()),
+                  );
+                },
+              ),
+            ],
+          ),
         ),
+
       ],
     );
   }
@@ -797,6 +733,48 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
           ),
         ),
       ],
+    );
+  }
+  Widget _buildResponsiveButton({
+    required String label,
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
+    return Container(
+      constraints: const BoxConstraints(
+        minWidth: 120,
+        maxWidth: 160, // الزر بيتغير حسب المساحة
+      ),
+      height: 50,
+      margin: const EdgeInsets.only(right: 12),
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xff0284C7),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: Colors.white, size: 20),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                label,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

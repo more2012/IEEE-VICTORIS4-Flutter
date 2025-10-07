@@ -2,110 +2,113 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../models/alternative_medicine_model.dart';
+import '../services/storage_service.dart';
 
 class AlternativeMedicineService {
-  // Replace with your actual backend URL
   static const String _baseUrl = 'https://3awn.up.railway.app/api';
-  static const String _alternativesEndpoint = '/alternatives';
+
+  String? _getAuthToken() {
+    try {
+      final token = StorageService.getString('auth_token') ??
+          StorageService.getString('access_token') ??
+          StorageService.getString('user_token');
+      return token;
+    } catch (e) {
+      print('Error getting auth token: $e');
+      return null;
+    }
+  }
 
   Map<String, String> get _headers => {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-    // Add authentication headers if needed
-    // 'Authorization': 'Bearer ${AuthService.getToken()}',
+    if (_getAuthToken() != null) 'Authorization': 'Bearer ${_getAuthToken()}',
   };
 
-  /// Fetches alternative medicines from the backend
-  Future<List<AlternativeMedicine>> getAlternatives({
-    required String medicineName,
-    String? dosage,
-  }) async {
-    try {
-      final Map<String, dynamic> requestBody = {
-        'medicine_name': medicineName,
-        if (dosage != null && dosage.isNotEmpty) 'dosage': dosage,
-      };
+  /// FIX: The original endpoint '/drugs/search' likely resulted in a 404.
+  /// Changed to '/drugs' which is the standard REST pattern for filtering.
+  Future<int?> searchDrugId(String medicineName) async {
+    // URL-encode the medicine name to handle spaces/special characters safely
+    final encodedMedicineName = Uri.encodeComponent(medicineName);
+    final searchUrl = '$_baseUrl/drugs?q=$encodedMedicineName';
 
-      final response = await http.post(
-        Uri.parse('$_baseUrl$_alternativesEndpoint'),
-        headers: _headers,
-        body: jsonEncode(requestBody),
-      );
+    print('🔎 Searching drug ID: $medicineName via URL: $searchUrl');
+
+    final response = await http.get(Uri.parse(searchUrl), headers: _headers);
+    print('🔸 search Response Status: ${response.statusCode}');
+
+    if (response.statusCode == 200) {
+      // Check for empty body before decoding
+      if (response.body.trim().isEmpty) {
+        print('Warning: Search returned 200 but body was empty.');
+        return null;
+      }
+
+      try {
+        final data = jsonDecode(response.body);
+
+        if (data is List && data.isNotEmpty) {
+          final idCandidate = data[0]['id'];
+          // Safely parse the ID, handling both int and string representations
+          final drugId = idCandidate is int ? idCandidate : int.tryParse(idCandidate.toString());
+
+          if (drugId != null) {
+            print('🔍 Found Drug ID: $drugId for $medicineName');
+            return drugId;
+          }
+        } else {
+          print('🔍 Search returned no results for $medicineName.');
+        }
+      } catch (e) {
+        print('Error decoding successful search response: $e');
+      }
+    } else {
+      print('Error: Search failed with status code ${response.statusCode}. Body: ${response.body}');
+    }
+    return null;
+  }
+
+
+  /// جلب البدائل بالـ ID الصحيح
+  Future<List<AlternativeMedicine>> getAlternativesByDrugId(int id) async {
+    final alternativesUrl = '$_baseUrl/drugs/alternatives';
+    print('Fetching alternatives from: $alternativesUrl');
+    try {
+      final response = await http.get(Uri.parse(alternativesUrl), headers: _headers);
 
       if (response.statusCode == 200) {
-        final Map<String, dynamic> data = jsonDecode(response.body);
-        final List<dynamic> alternativesJson = data['alternatives'] ?? [];
+        print('Alternatives Response Body (for drug ID $id): ${response.body}');
+        // ---------------------------------
 
-        return alternativesJson
-            .map((json) => AlternativeMedicine.fromJson(json))
-            .toList();
-      } else if (response.statusCode == 404) {
-        return [];
+        final data = jsonDecode(response.body);
+        if (data is List) {
+          print('Successfully fetched ${data.length} alternatives.');
+          return data.map<AlternativeMedicine>((json) => AlternativeMedicine.fromJson(json)).toList();
+        } else {
+          print('Alternatives endpoint returned non-list data.');
+        }
       } else {
-        throw Exception('Failed to fetch alternatives: ${response.statusCode}');
+        print('Error fetching alternatives (Status ${response.statusCode}): ${response.body}');
       }
-    } on SocketException {
-      throw Exception('No internet connection. Please check your network.');
-    } on FormatException {
-      throw Exception('Invalid response format from server.');
+      return [];
     } catch (e) {
-      throw Exception('Error fetching alternatives: $e');
+      print('Error fetching alternatives: $e');
+      return [];
     }
   }
 
-  /// Mock data for testing - USE THIS FOR TESTING FIRST
-  Future<List<AlternativeMedicine>> getMockAlternatives(String medicineName) async {
-    // Simulate network delay
-    await Future.delayed(const Duration(seconds: 2));
-
-    // Mock alternatives based on common medicines
-    final Map<String, List<Map<String, dynamic>>> mockData = {
-      'panadol': [
-        {
-          'id': '1',
-          'name': 'Tylenol',
-          'active_ingredient': 'Acetaminophen',
-          'dosage': '500mg',
-          'manufacturer': 'Johnson & Johnson',
-          'price': 45.0,
-          'description': 'Pain reliever and fever reducer',
-          'similarity_percentage': 95.0,
-          'side_effects': ['Nausea', 'Stomach pain'],
-          'availability': 'Available',
-          'image_url': '',
-        },
-        {
-          'id': '2',
-          'name': 'Advil',
-          'active_ingredient': 'Ibuprofen',
-          'dosage': '400mg',
-          'manufacturer': 'Pfizer',
-          'price': 52.0,
-          'description': 'Anti-inflammatory pain reliever',
-          'similarity_percentage': 80.0,
-          'side_effects': ['Heartburn', 'Dizziness'],
-          'availability': 'Available',
-          'image_url': '',
-        },
-      ],
-      'aspirin': [
-        {
-          'id': '3',
-          'name': 'Disprin',
-          'active_ingredient': 'Acetylsalicylic acid',
-          'dosage': '325mg',
-          'manufacturer': 'Reckitt Benckiser',
-          'price': 38.0,
-          'description': 'Pain reliever and blood thinner',
-          'similarity_percentage': 92.0,
-          'side_effects': ['Stomach irritation', 'Bleeding'],
-          'availability': 'Available',
-          'image_url': '',
-        },
-      ],
-    };
-
-    final alternatives = mockData[medicineName.toLowerCase()] ?? [];
-    return alternatives.map((json) => AlternativeMedicine.fromJson(json)).toList();
+  Future<List<AlternativeMedicine>> findAlternatives(String medicineName) async {
+    print('Starting search for alternatives for: $medicineName');
+    try {
+      final drugId = await searchDrugId(medicineName);
+      if (drugId == null) {
+        print('❌ Could not find Drug ID for $medicineName.');
+        return [];
+      }
+      return await getAlternativesByDrugId(drugId);
+    } catch (e) {
+      print('Error in findAlternatives: $e');
+      return [];
+    }
   }
 }
