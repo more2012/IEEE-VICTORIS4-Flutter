@@ -1,4 +1,3 @@
-import 'dart:convert';
 
 class Medication {
   final String id;

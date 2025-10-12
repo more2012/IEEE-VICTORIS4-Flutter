@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../models/medication_model.dart';
 import '../../../services/notification_service.dart';
 import '../../../services/api_service.dart';
-import 'dart:convert';
 import 'dart:async';
 
 class MedicationController with ChangeNotifier {
@@ -176,7 +175,7 @@ class MedicationDose {
     final baseTime = NotificationTimeUtil.parseTimeString(medication.time);
     final calculatedTime = NotificationTimeUtil.getDoseTime(baseTime, doseNumber, medication.timesPerDay);
 
-    return calculatedTime.hour.toString().padLeft(2, '0') + ':' + calculatedTime.minute.toString().padLeft(2, '0');
+    return '${calculatedTime.hour.toString().padLeft(2, '0')}:${calculatedTime.minute.toString().padLeft(2, '0')}';
   }
 
   String get doseDescription {

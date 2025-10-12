@@ -6,10 +6,10 @@ class AlternativeMedicineCard extends StatelessWidget {
   final VoidCallback onAddPressed;
 
   const AlternativeMedicineCard({
-    Key? key,
+    super.key,
     required this.alternative,
     required this.onAddPressed,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -181,6 +181,8 @@ class AlternativeMedicineCard extends StatelessWidget {
                   color: Color(0xFF8E8E93),
                 ),
               ),
+              tilePadding: EdgeInsets.zero,
+              childrenPadding: EdgeInsets.zero,
               children: [
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -211,8 +213,6 @@ class AlternativeMedicineCard extends StatelessWidget {
                   ),
                 ),
               ],
-              tilePadding: EdgeInsets.zero,
-              childrenPadding: EdgeInsets.zero,
             ),
           ],
         ],

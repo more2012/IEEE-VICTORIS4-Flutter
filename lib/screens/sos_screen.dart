@@ -216,7 +216,7 @@ class _SOSScreenState extends State<SOSScreen> with TickerProviderStateMixin {
                 child: Text('• ${c.name} (${c.relationship})',
                     style: const TextStyle(fontSize: 14)),
               ))
-                  .toList(),
+                  ,
             ],
           ),
         ),
@@ -642,7 +642,7 @@ class _SOSScreenState extends State<SOSScreen> with TickerProviderStateMixin {
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
-                  value: selectedRelationship,
+                  initialValue: selectedRelationship,
                   decoration: const InputDecoration(
                     labelText: 'Relationship',
                     prefixIcon: Icon(Icons.group),

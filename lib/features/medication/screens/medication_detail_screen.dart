@@ -34,57 +34,6 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
     _loadDrugInformation();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey.shade50,
-      body: CustomScrollView(
-        slivers: [
-          _buildAppBar(),
-          SliverToBoxAdapter(
-            child: Column(
-              children: [
-                _buildMedicationHeader(),
-                const SizedBox(height: 8),
-                _buildQuickStats(),
-                const SizedBox(height: 10),
-                // NEW: Alternatives Button added here for better visibility
-                _buildAlternativesButton(),
-                if (_isLoadingInfo) _buildLoadingCard(),
-                if (_drugInfo.isNotEmpty)
-                  _buildInfoSection(
-                    'About This Medication',
-                    _drugInfo,
-                    Icons.info_outline,
-                  ),
-                if (_dosageInfo.isNotEmpty)
-                  _buildInfoSection(
-                    'Dosage Information',
-                    _dosageInfo,
-                    Icons.medication,
-                  ),
-                if (_sideEffects.isNotEmpty)
-                  _buildInfoSection(
-                    'Side Effects',
-                    _sideEffects,
-                    Icons.warning_amber,
-                  ),
-                if (_interactions.isNotEmpty)
-                  _buildInfoSection(
-                    'Drug Interactions',
-                    _interactions,
-                    Icons.healing,
-                  ),
-                _buildActionButtons(),
-                const SizedBox(height: 100),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   // New method for the Alternatives button (full width, placed above other actions)
   Widget _buildAlternativesButton() {
     return Padding(
@@ -442,24 +391,37 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
                     ),
                   );
                 } else {
-                  setState(() {
-                    for (int i = 1; i <= widget.medication.timesPerDay; i++) {
-                      if (!widget.medication.isDoseTakenForDate(today, i)) {}
-                    }
-                  });
+                  // FIX: Removed unnecessary setState loop here.
+                  // The toggleMedicationDose function handles state update via controller.
+                  // This button only needs to visually update itself if necessary.
+                  // But since the core logic is often tied to the controller,
+                  // we'll rely on external state management or simply mark the dose taken directly.
 
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'All remaining doses for today marked as taken!',
+                  // We can mark the next single dose as taken if not all are taken yet
+                  final controller = context.read<MedicationController>();
+                  bool doseMarked = false;
+                  for (int i = 1; i <= widget.medication.timesPerDay; i++) {
+                    if (!widget.medication.isDoseTakenForDate(today, i)) {
+                      controller.toggleMedicationDose(widget.medication.id, today, i);
+                      doseMarked = true;
+                      break;
+                    }
+                  }
+
+                  if (doseMarked) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Dose marked as taken!',
+                        ),
+                        backgroundColor: Colors.green,
                       ),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
+                    );
+                  }
                 }
               },
               icon: const Icon(Icons.check_circle),
-              label: const Text('Mark Today as Taken'),
+              label: const Text('Mark Next Dose as Taken'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,
                 foregroundColor: Colors.white,
@@ -643,12 +605,18 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
   }
 
   Future<void> _loadDrugInformation() async {
+    // FIX 1: Check mounted before the first setState()
+    if (!mounted) return;
+
     setState(() {
       _isLoadingInfo = true;
     });
 
     try {
       final info = await _getDrugInfoFromAI(widget.medication.name);
+
+      // FIX 2: Check mounted before the second setState()
+      if (!mounted) return;
 
       setState(() {
         _drugInfo = info['general'] ?? '';
@@ -658,6 +626,9 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
         _isLoadingInfo = false;
       });
     } catch (e) {
+      // FIX 3: Check mounted before the final setState() in catch block
+      if (!mounted) return;
+
       setState(() {
         _drugInfo =
         'Unable to load drug information. Please check your internet connection.';
@@ -767,5 +738,56 @@ Please keep each section informative but concise. Include important safety infor
 
   void _refreshInformation() {
     _loadDrugInformation();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey.shade50,
+      body: CustomScrollView(
+        slivers: [
+          _buildAppBar(),
+          SliverToBoxAdapter(
+            child: Column(
+              children: [
+                _buildMedicationHeader(),
+                const SizedBox(height: 8),
+                _buildQuickStats(),
+                const SizedBox(height: 10),
+                // NEW: Alternatives Button added here for better visibility
+                _buildAlternativesButton(),
+                if (_isLoadingInfo) _buildLoadingCard(),
+                if (_drugInfo.isNotEmpty)
+                  _buildInfoSection(
+                    'About This Medication',
+                    _drugInfo,
+                    Icons.info_outline,
+                  ),
+                if (_dosageInfo.isNotEmpty)
+                  _buildInfoSection(
+                    'Dosage Information',
+                    _dosageInfo,
+                    Icons.medication,
+                  ),
+                if (_sideEffects.isNotEmpty)
+                  _buildInfoSection(
+                    'Side Effects',
+                    _sideEffects,
+                    Icons.warning_amber,
+                  ),
+                if (_interactions.isNotEmpty)
+                  _buildInfoSection(
+                    'Drug Interactions',
+                    _interactions,
+                    Icons.healing,
+                  ),
+                _buildActionButtons(),
+                const SizedBox(height: 100),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

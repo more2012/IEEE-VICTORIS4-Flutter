@@ -763,7 +763,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                       style: const TextStyle(fontSize: 14),
                     ),
                   );
-                }).toList(),
+                }),
                 const SizedBox(height: 12),
                 const Text(
                   'Please consult a healthcare professional before taking this medication.',

@@ -189,17 +189,17 @@ class AuthService {
   }
 
   static Future<bool> isLoggedIn() async {
-    final token = await StorageService.getString('auth_token');
+    final token = StorageService.getString('auth_token');
     return token != null && token.isNotEmpty;
   }
 
   static Future<String?> getToken() async {
-    return await StorageService.getString('auth_token');
+    return StorageService.getString('auth_token');
   }
 
   static Future<String?> refreshToken() async {
     try {
-      final refreshToken = await StorageService.getString('refresh_token');
+      final refreshToken = StorageService.getString('refresh_token');
       if (refreshToken == null) {
         print('⚠️ No refresh token available.');
         return null;

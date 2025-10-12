@@ -186,7 +186,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 });
                 _handleNotificationToggle(value);
               },
-              activeColor: Colors.blue,
+              activeThumbColor: Colors.blue,
             ),
             onTap: null,
           ),

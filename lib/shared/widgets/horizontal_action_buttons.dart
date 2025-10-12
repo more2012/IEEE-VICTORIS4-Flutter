@@ -6,11 +6,11 @@ class HorizontalActionButtons extends StatelessWidget {
   final VoidCallback onFindAlternativePressed;
 
   const HorizontalActionButtons({
-    Key? key,
+    super.key,
     required this.onAddMedicinePressed,
     required this.onScanMedicinePressed,
     required this.onFindAlternativePressed,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +59,7 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       width: 140,
       height: 50,
       child: ElevatedButton(

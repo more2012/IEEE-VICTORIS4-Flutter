@@ -427,7 +427,7 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
                     },
                   ),
                 );
-              }).toList(),
+              }),
           ],
         );
       },
@@ -592,7 +592,7 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
                   },
                   isInMedicationScreen: true,
                 ),
-              )).toList(),
+              )),
               SizedBox(height: screenHeight * 0.1),
             ],
           ),

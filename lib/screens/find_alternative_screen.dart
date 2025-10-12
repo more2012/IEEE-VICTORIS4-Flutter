@@ -5,7 +5,8 @@ import '../shared/widgets/alternative_medicine_card.dart';
 
 class FindAlternativeScreen extends StatefulWidget {
   final String? initialSearchTerm;
-  const FindAlternativeScreen({Key? key, this.initialSearchTerm}) : super(key: key);
+
+  const FindAlternativeScreen({super.key, this.initialSearchTerm});
 
   @override
   State<FindAlternativeScreen> createState() => _FindAlternativeScreenState();
@@ -14,7 +15,6 @@ class FindAlternativeScreen extends StatefulWidget {
 class _FindAlternativeScreenState extends State<FindAlternativeScreen> {
   final TextEditingController _medicineNameController = TextEditingController();
   final AlternativeMedicineService _alternativeService = AlternativeMedicineService();
-
   List<AlternativeMedicine> _alternatives = [];
   bool _isLoading = false;
   bool _hasSearched = false;
@@ -51,7 +51,8 @@ class _FindAlternativeScreenState extends State<FindAlternativeScreen> {
     });
 
     try {
-      // Use the real API - removed mock data
+      print('🔍 Searching for alternatives: ${_medicineNameController.text.trim()}');
+
       final alternatives = await _alternativeService.findAlternatives(
         _medicineNameController.text.trim(),
       );
@@ -63,14 +64,23 @@ class _FindAlternativeScreenState extends State<FindAlternativeScreen> {
 
       if (alternatives.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No alternatives found for this medicine'),
+          SnackBar(
+            content: Text('No alternatives found for "${_medicineNameController.text.trim()}"'),
             backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Found ${alternatives.length} alternatives!'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
           ),
         );
       }
-
     } catch (e) {
+      print('❌ Error finding alternatives: $e');
       setState(() {
         _isLoading = false;
         _alternatives = [];
@@ -131,10 +141,21 @@ class _FindAlternativeScreenState extends State<FindAlternativeScreen> {
                   child: TextField(
                     controller: _medicineNameController,
                     decoration: InputDecoration(
-                      hintText: 'Medicine Name',
+                      hintText: 'Medicine Name (e.g., Panadol, Aspirin)',
                       hintStyle: TextStyle(color: Colors.grey.shade500),
                       prefixIcon: Icon(Icons.search, color: Colors.grey.shade400),
-                      suffixIcon: Icon(Icons.mic, color: const Color(0xFF0284C7)),
+                      suffixIcon: _medicineNameController.text.isNotEmpty
+                          ? IconButton(
+                        icon: Icon(Icons.clear, color: Colors.grey.shade400),
+                        onPressed: () {
+                          _medicineNameController.clear();
+                          setState(() {
+                            _hasSearched = false;
+                            _alternatives = [];
+                          });
+                        },
+                      )
+                          : Icon(Icons.mic, color: const Color(0xFF0284C7)),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 20,
@@ -142,10 +163,12 @@ class _FindAlternativeScreenState extends State<FindAlternativeScreen> {
                       ),
                     ),
                     onSubmitted: (_) => _findAlternatives(),
+                    onChanged: (value) {
+                      setState(() {}); // Refresh UI to show/hide clear button
+                    },
                   ),
                 ),
                 const SizedBox(height: 20),
-
                 // Search Button
                 SizedBox(
                   width: double.infinity,
@@ -165,11 +188,11 @@ class _FindAlternativeScreenState extends State<FindAlternativeScreen> {
                       width: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        valueColor: AlwaysStoppedAnimation(Colors.white),
                       ),
                     )
                         : const Text(
-                      'Alternative Medicine',
+                      'Find Alternatives',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -181,7 +204,6 @@ class _FindAlternativeScreenState extends State<FindAlternativeScreen> {
               ],
             ),
           ),
-
           // Content Area
           Expanded(
             child: Container(
@@ -200,7 +222,6 @@ class _FindAlternativeScreenState extends State<FindAlternativeScreen> {
       return Column(
         children: [
           const SizedBox(height: 40),
-
           // Image
           Container(
             width: 120,
@@ -215,18 +236,16 @@ class _FindAlternativeScreenState extends State<FindAlternativeScreen> {
                 width: 80,
                 height: 80,
                 errorBuilder: (context, error, stackTrace) {
-                  return Icon(
+                  return const Icon(
                     Icons.medical_services,
                     size: 60,
-                    color: const Color(0xFF0284C7),
+                    color: Color(0xFF0284C7),
                   );
                 },
               ),
             ),
           ),
-
           const SizedBox(height: 30),
-
           // Instructions
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 40),
@@ -240,9 +259,7 @@ class _FindAlternativeScreenState extends State<FindAlternativeScreen> {
               ),
             ),
           ),
-
           const SizedBox(height: 40),
-
           // Feature Cards
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -277,7 +294,7 @@ class _FindAlternativeScreenState extends State<FindAlternativeScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0284C7)),
+              valueColor: AlwaysStoppedAnimation(Color(0xFF0284C7)),
             ),
             SizedBox(height: 16),
             Text(
@@ -311,12 +328,13 @@ class _FindAlternativeScreenState extends State<FindAlternativeScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Try searching with a different medicine name',
-              style: TextStyle(
+            Text(
+              'Try searching with "${_medicineNameController.text.trim()}" or a different medicine name',
+              style: const TextStyle(
                 fontSize: 14,
                 color: Color(0xFF6B7280),
               ),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
             ElevatedButton(
@@ -369,7 +387,6 @@ class _FindAlternativeScreenState extends State<FindAlternativeScreen> {
               ],
             ),
           ),
-
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 20),

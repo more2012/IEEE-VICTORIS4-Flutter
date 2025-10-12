@@ -89,8 +89,8 @@ class AuthController with ChangeNotifier {
     try {
       print('🔄 Initializing auth state...');
 
-      final userDataString = await StorageService.getString('user_data');
-      final isLoggedInStored = await StorageService.getBool('is_logged_in') ?? false;
+      final userDataString = StorageService.getString('user_data');
+      final isLoggedInStored = StorageService.getBool('is_logged_in') ?? false;
 
       if (userDataString != null && userDataString.isNotEmpty && isLoggedInStored) {
         _isLoggedIn = true;

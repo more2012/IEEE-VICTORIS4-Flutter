@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../models/alternative_medicine_model.dart';
 import '../services/storage_service.dart';
@@ -25,20 +24,16 @@ class AlternativeMedicineService {
     if (_getAuthToken() != null) 'Authorization': 'Bearer ${_getAuthToken()}',
   };
 
-  /// FIX: The original endpoint '/drugs/search' likely resulted in a 404.
-  /// Changed to '/drugs' which is the standard REST pattern for filtering.
   Future<int?> searchDrugId(String medicineName) async {
-    // URL-encode the medicine name to handle spaces/special characters safely
     final encodedMedicineName = Uri.encodeComponent(medicineName);
-    final searchUrl = '$_baseUrl/drugs?q=$encodedMedicineName';
+    final alternativesUrl = '$_baseUrl/drugs/alternatives?name=$encodedMedicineName';
 
-    print('🔎 Searching drug ID: $medicineName via URL: $searchUrl');
+    print('🔎 Searching drug ID: $medicineName via URL: $alternativesUrl');
 
-    final response = await http.get(Uri.parse(searchUrl), headers: _headers);
+    final response = await http.get(Uri.parse(alternativesUrl), headers: _headers);
     print('🔸 search Response Status: ${response.statusCode}');
 
     if (response.statusCode == 200) {
-      // Check for empty body before decoding
       if (response.body.trim().isEmpty) {
         print('Warning: Search returned 200 but body was empty.');
         return null;
@@ -46,7 +41,6 @@ class AlternativeMedicineService {
 
       try {
         final data = jsonDecode(response.body);
-
         if (data is List && data.isNotEmpty) {
           final idCandidate = data[0]['id'];
           // Safely parse the ID, handling both int and string representations
@@ -68,47 +62,60 @@ class AlternativeMedicineService {
     return null;
   }
 
+  /// FIXED: Fetch alternatives by medicine name (not ID) as required by backend
+  Future<List<AlternativeMedicine>> getAlternativesByMedicineName(String medicineName) async {
+    // URL-encode the medicine name to handle spaces/special characters safely
+    final encodedMedicineName = Uri.encodeComponent(medicineName);
+    final alternativesUrl = '$_baseUrl/drugs/alternatives?name=$encodedMedicineName';
 
-  /// جلب البدائل بالـ ID الصحيح
-  Future<List<AlternativeMedicine>> getAlternativesByDrugId(int id) async {
-    final alternativesUrl = '$_baseUrl/drugs/alternatives';
-    print('Fetching alternatives from: $alternativesUrl');
+    print('🔍 Fetching alternatives from: $alternativesUrl');
+
     try {
       final response = await http.get(Uri.parse(alternativesUrl), headers: _headers);
 
+      print('🔸 Alternatives Response Status: ${response.statusCode}');
+      print('🔸 Alternatives Response Body: ${response.body}');
+
       if (response.statusCode == 200) {
-        print('Alternatives Response Body (for drug ID $id): ${response.body}');
-        // ---------------------------------
+        // Check for empty body before decoding
+        if (response.body.trim().isEmpty) {
+          print('Warning: Alternatives returned 200 but body was empty.');
+          return [];
+        }
 
         final data = jsonDecode(response.body);
         if (data is List) {
-          print('Successfully fetched ${data.length} alternatives.');
-          return data.map<AlternativeMedicine>((json) => AlternativeMedicine.fromJson(json)).toList();
+          print('✅ Successfully fetched ${data.length} alternatives.');
+          return data.map((json) => AlternativeMedicine.fromJson(json)).toList();
         } else {
-          print('Alternatives endpoint returned non-list data.');
+          print('⚠️ Alternatives endpoint returned non-list data: $data');
         }
       } else {
-        print('Error fetching alternatives (Status ${response.statusCode}): ${response.body}');
+        print('❌ Error fetching alternatives (Status ${response.statusCode}): ${response.body}');
       }
       return [];
     } catch (e) {
-      print('Error fetching alternatives: $e');
+      print('❌ Error fetching alternatives: $e');
       return [];
     }
   }
 
+  /// Updated method to use the correct API call
   Future<List<AlternativeMedicine>> findAlternatives(String medicineName) async {
-    print('Starting search for alternatives for: $medicineName');
+    print('🚀 Starting search for alternatives for: $medicineName');
+
     try {
-      final drugId = await searchDrugId(medicineName);
-      if (drugId == null) {
-        print('❌ Could not find Drug ID for $medicineName.');
-        return [];
-      }
-      return await getAlternativesByDrugId(drugId);
+      // Directly call the alternatives endpoint with medicine name
+      return await getAlternativesByMedicineName(medicineName);
     } catch (e) {
-      print('Error in findAlternatives: $e');
+      print('❌ Error in findAlternatives: $e');
       return [];
     }
+  }
+
+  /// Keep the old method for backward compatibility (if needed elsewhere)
+  Future<List<AlternativeMedicine>> getAlternativesByDrugId(int id) async {
+    print('⚠️ getAlternativesByDrugId is deprecated. Use getAlternativesByMedicineName instead.');
+    return [];
   }
 }
