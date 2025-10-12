@@ -12,7 +12,7 @@ class Medication {
   final bool isTaken;
   final DateTime? nextDoseTime;
   final String frequency;
-  final List<dynamic>? severityCheck; // ADD THIS LINE
+  final List<dynamic>? severityCheck;
 
   Medication({
     required this.id,

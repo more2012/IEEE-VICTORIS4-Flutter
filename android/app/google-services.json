@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "31243808899",
+    "project_id": "awn-2adad",
+    "storage_bucket": "awn-2adad.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:31243808899:android:cf4b965650c0d0c0516bb6",
+        "android_client_info": {
+          "package_name": "com.awan.awanapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDjQR-FGRfX24wxOkc7VHujcc4nrZgy_Z4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
