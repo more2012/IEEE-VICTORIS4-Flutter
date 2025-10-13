@@ -48,11 +48,11 @@ class AlternativeMedicineCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: _getSimilarityColor(),
+                  color: Colors.green,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  '${alternative.similarityPercentage.toInt()}% match',
+                  '100% match',
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
@@ -88,15 +88,15 @@ class AlternativeMedicineCard extends StatelessWidget {
           // Manufacturer and price
           Row(
             children: [
-              Expanded(
-                child: Text(
-                  'By: ${alternative.manufacturer}',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF8E8E93),
-                  ),
-                ),
-              ),
+              // Expanded(
+              //   child: Text(
+              //     'By: ${alternative.manufacturer}',
+              //     style: const TextStyle(
+              //       fontSize: 13,
+              //       color: Color(0xFF8E8E93),
+              //     ),
+              //   ),
+              // ),
               Text(
                 'EGP ${alternative.price.toStringAsFixed(0)}',
                 style: const TextStyle(
@@ -131,11 +131,11 @@ class AlternativeMedicineCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: _getAvailabilityColor(),
+                  color: Colors.green,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  alternative.availability,
+                  "Available",
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,

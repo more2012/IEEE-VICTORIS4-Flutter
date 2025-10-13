@@ -145,33 +145,89 @@ class Medication {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'id': int.tryParse(id),
+    final map = <String, dynamic>{
       'name': name,
       'dosage': dosage,
-      'time': '$time:00',
+      'time': time.contains(':') ? '$time:00' : time,
       'type': type,
       'times_per_day': timesPerDay,
       'duration_in_days': durationInDays,
       'start_date': '${startDate.year}-${startDate.month.toString().padLeft(2, '0')}-${startDate.day.toString().padLeft(2, '0')}',
       'dose_taken': doseTaken,
     };
+    final parsedId = int.tryParse(id);
+    if (parsedId != null) {
+      map['id'] = parsedId;
+    }
+    return map;
   }
 
   factory Medication.fromJson(Map<String, dynamic> json) {
+    String pickString(dynamic value, [String fallback = '']) {
+      if (value == null) return fallback;
+      if (value is String) return value;
+      return value.toString();
+    }
+
+    // Accept alternate field names from backend
+    final rawId = json['id'] ?? json['pk'] ?? json['uuid'];
+    final rawName = json['name'] ?? json['drug_name'] ?? json['title'];
+    final rawDosage = json['dosage'] ?? json['dose'] ?? json['dosage_mg'];
+    final rawTime = json['time'] ?? json['dose_time'] ?? '08:00:00';
+    final rawType = json['type'] ?? json['form'] ?? 'Tablet';
+    final rawTimesPerDay = json['times_per_day'] ?? json['timesPerDay'] ?? 1;
+    final rawDuration = json['duration_in_days'] ?? json['duration'] ?? 7;
+    final rawStartDate = json['start_date'] ?? json['startDate'];
+    final rawDoseTaken = json['dose_taken'] ?? json['doseTaken'] ?? {};
+
+    String parseTimeString(dynamic t) {
+      final s = pickString(t, '08:00:00');
+      if (s.length >= 5 && s.contains(':')) {
+        return s.substring(0, 5);
+      }
+      return '08:00';
+    }
+
+    DateTime parseDate(dynamic d) {
+      final s = pickString(d, '');
+      if (s.isEmpty) return DateTime.now();
+      try {
+        return DateTime.parse(s);
+      } catch (_) {
+        return DateTime.now();
+      }
+    }
+
+    Map<String, bool> coerceDoseTaken(dynamic raw) {
+      final result = <String, bool>{};
+      if (raw is Map) {
+        raw.forEach((k, v) {
+          if (v is bool) {
+            result[pickString(k)] = v;
+          } else if (v is num) {
+            result[pickString(k)] = v != 0;
+          } else if (v is String) {
+            final lower = v.toLowerCase();
+            result[pickString(k)] = lower == 'true' || lower == '1' || lower == 'yes';
+          } else {
+            result[pickString(k)] = false;
+          }
+        });
+      }
+      return result;
+    }
+
     return Medication(
-      id: json['id']?.toString() ?? '',
-      name: json['name'] ?? '',
-      dosage: json['dosage'] ?? '',
-      time: (json['time'] as String?)?.substring(0, 5) ?? '',
-      type: json['type'] ?? 'Tablet',
-      timesPerDay: json['times_per_day'] ?? 1,
-      durationInDays: json['duration_in_days'] ?? 7,
-      startDate: json['start_date'] != null
-          ? DateTime.parse(json['start_date'])
-          : DateTime.now(),
-      doseTaken: Map<String, bool>.from(json['dose_taken'] ?? {}),
-      isTaken: json['is_taken'] ?? false,
+      id: pickString(rawId, ''),
+      name: pickString(rawName, ''),
+      dosage: pickString(rawDosage, ''),
+      time: parseTimeString(rawTime),
+      type: pickString(rawType, 'Tablet'),
+      timesPerDay: (rawTimesPerDay is num) ? rawTimesPerDay.toInt() : int.tryParse(pickString(rawTimesPerDay, '1')) ?? 1,
+      durationInDays: (rawDuration is num) ? rawDuration.toInt() : int.tryParse(pickString(rawDuration, '7')) ?? 7,
+      startDate: parseDate(rawStartDate),
+      doseTaken: coerceDoseTaken(rawDoseTaken),
+      isTaken: (json['is_taken'] is bool) ? json['is_taken'] as bool : false,
       severityCheck: json['severity_check'],
     );
   }

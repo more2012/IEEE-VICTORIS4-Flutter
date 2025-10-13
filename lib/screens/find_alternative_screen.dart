@@ -119,9 +119,10 @@ class _FindAlternativeScreenState extends State<FindAlternativeScreen> {
       ),
       body: Column(
         children: [
-          // Search Section
+          SizedBox(height: 10,),
           Container(
-            color: const Color(0xFF0284C7),
+            color: Colors.white,
+          //const Color(0xFF0284C7),
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 30),
             child: Column(
               children: [
@@ -176,7 +177,7 @@ class _FindAlternativeScreenState extends State<FindAlternativeScreen> {
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _findAlternatives,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1E40AF),
+                      backgroundColor: const Color(0xFF0284C7),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(25),
                       ),
@@ -218,7 +219,6 @@ class _FindAlternativeScreenState extends State<FindAlternativeScreen> {
 
   Widget _buildContent() {
     if (!_hasSearched) {
-      // Initial state with image and instructions
       return Column(
         children: [
           const SizedBox(height: 40),
@@ -230,7 +230,7 @@ class _FindAlternativeScreenState extends State<FindAlternativeScreen> {
               color: const Color(0xFFE0F2FE),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: Center(
+            child: Container(
               child: Image.asset(
                 'assets/images/find-alternative-image.png',
                 width: 80,

@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.awan"
+    namespace = "com.awan.awanapp"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -20,7 +20,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.awan"
+        applicationId = "com.awan.awanapp"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

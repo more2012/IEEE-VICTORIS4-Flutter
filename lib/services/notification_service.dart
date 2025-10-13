@@ -15,19 +15,22 @@ class NotificationService {
     if (_initialized) return;
 
     tz.initializeTimeZones();
+    // Rely on tz default local; log for diagnostics
+    try {
+      print('🕒 tz.local: ' + tz.local.name);
+    } catch (_) {}
 
     const AndroidInitializationSettings initializationSettingsAndroid =
-    AndroidInitializationSettings('@mipmap/ic_launcher');
+        AndroidInitializationSettings('@mipmap/ic_launcher');
 
     const DarwinInitializationSettings initializationSettingsIOS =
-    DarwinInitializationSettings(
+        DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
       requestSoundPermission: true,
     );
 
-    const InitializationSettings initializationSettings =
-    InitializationSettings(
+    const InitializationSettings initializationSettings = InitializationSettings(
       android: initializationSettingsAndroid,
       iOS: initializationSettingsIOS,
     );
@@ -37,14 +40,27 @@ class NotificationService {
       onDidReceiveNotificationResponse: _onNotificationTapped,
     );
 
+    final androidImpl = _notifications
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    if (androidImpl != null) {
+      const AndroidNotificationChannel channel = AndroidNotificationChannel(
+        'medication_reminders',
+        'Medication Reminders',
+        description: 'Notifications for medication reminders',
+        importance: Importance.high,
+      );
+      await androidImpl.createNotificationChannel(channel);
+    }
     _initialized = true;
     print('✅ Notification Service Initialized');
   }
 
   static void _onNotificationTapped(NotificationResponse response) {
-    final medicationId = response.payload;
-    print('Notification tapped for medication: $medicationId');
+    final payload = response.payload;
+    print('Notification tapped. payload: $payload');
   }
+
+  // Firebase Messaging removed: local notifications only.
 
   static Future<bool> requestPermissions() async {
     final status = await Permission.notification.request();
@@ -142,8 +158,16 @@ class NotificationService {
       scheduledDateTime = scheduledDateTime.add(const Duration(days: 1));
     }
 
-    final tz.TZDateTime scheduledTime = tz.TZDateTime.from(scheduledDateTime, tz.local);
+    // Compute schedule time as duration from now to avoid relying on tz database mapping
+    Duration delay = scheduledDateTime.difference(DateTime.now());
+    if (delay.isNegative) {
+      delay = delay + const Duration(days: 1);
+    }
+    final tz.TZDateTime scheduledTime = tz.TZDateTime.now(tz.local).add(delay);
     final doseDesc = NotificationTimeUtil.getDoseDescription(doseNumber, medication.timesPerDay);
+
+    final dateKey = '${notificationDate.year}-${notificationDate.month.toString().padLeft(2, '0')}-${notificationDate.day.toString().padLeft(2, '0')}';
+    final initPayload = '${medication.id}|$dateKey|$doseNumber|init';
 
     await _notifications.zonedSchedule(
       notificationId,
@@ -151,24 +175,87 @@ class NotificationService {
       'Take your ${medication.name} ${medication.dosage}${doseDesc.isNotEmpty ? ' ($doseDesc)' : ''}',
       scheduledTime,
       notificationDetails,
-      payload: medication.id,
+      payload: initPayload,
       uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      androidAllowWhileIdle: true,
     );
 
-    print('⏰ Scheduled: ${medication.name} on ${scheduledDateTime.day}/${scheduledDateTime.month} at ${actualTime.hour}:${actualTime.minute.toString().padLeft(2, '0')}');
+    // Failsafe: in case some OEM/OS blocks the alarm broadcast, trigger a one-shot
+    // Dart timer to show the notification at the due time if still pending.
+    // Note: This requires the app process to be alive; it is a pragmatic backup.
+    Future.delayed(delay + const Duration(seconds: 3), () async {
+      try {
+        final pendingNow = await _notifications.pendingNotificationRequests();
+        final exists = pendingNow.any((p) => (p.payload ?? '') == initPayload);
+        if (!exists) {
+          // Already delivered or cancelled; do nothing.
+          return;
+        }
+        // Show failsafe notification
+        final safeId = await _getNextNotificationId();
+        await _notifications.show(
+          safeId,
+          '💊 Time for your medication!',
+          'Take your ${medication.name} ${medication.dosage}${doseDesc.isNotEmpty ? ' ($doseDesc)' : ''}',
+          notificationDetails,
+          payload: initPayload.replaceFirst('|init', '|failsafe'),
+        );
+        print('🛟 Failsafe notification shown for ${medication.name}');
+      } catch (e) {
+        print('⚠️ Failsafe scheduling error: $e');
+      }
+    });
+
+    // Schedule follow-up reminder 1 hour later if not marked as taken
+    final followUpId = await _getNextNotificationId();
+    final followUpTime = scheduledTime.add(const Duration(hours: 1));
+    final followUpPayload = '${medication.id}|$dateKey|$doseNumber|followup';
+    await _notifications.zonedSchedule(
+      followUpId,
+      '⏰ Reminder: ${medication.name}',
+      'Please take your ${medication.dosage}${doseDesc.isNotEmpty ? ' ($doseDesc)' : ''}',
+      followUpTime,
+      notificationDetails,
+      payload: followUpPayload,
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      androidAllowWhileIdle: true,
+    );
+
+    final deltaSec = scheduledDateTime.difference(DateTime.now()).inSeconds;
+    print('⏰ Scheduled: ${medication.name} on ${scheduledDateTime.day}/${scheduledDateTime.month} at ${actualTime.hour}:${actualTime.minute.toString().padLeft(2, '0')} (in ${deltaSec}s)');
+    final pending = await _notifications.pendingNotificationRequests();
+    print('📝 Pending notifications count: ${pending.length}');
+    for (var i = 0; i < pending.length && i < 3; i++) {
+      final p = pending[i];
+      print('   • id=${p.id} title=${p.title} payload=${p.payload}');
+    }
   }
 
   static Future<void> cancelMedicationNotifications(String medicationId) async {
     await _ensureInitialized();
 
     final pendingNotifications = await _notifications.pendingNotificationRequests();
-    final notificationsToCancel = pendingNotifications.where((p) => p.payload == medicationId);
+    final notificationsToCancel = pendingNotifications.where((p) => (p.payload ?? '').startsWith('$medicationId|'));
 
     for (var notification in notificationsToCancel) {
       await _notifications.cancel(notification.id);
     }
 
     print('❌ Cancelled notifications for medication: $medicationId');
+  }
+
+  static Future<void> cancelDoseNotifications(String medicationId, DateTime date, int doseNumber) async {
+    await _ensureInitialized();
+    final dateKey = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    final pendingNotifications = await _notifications.pendingNotificationRequests();
+    final prefix = '$medicationId|$dateKey|$doseNumber|';
+    for (var n in pendingNotifications) {
+      if ((n.payload ?? '').startsWith(prefix)) {
+        await _notifications.cancel(n.id);
+      }
+    }
   }
 
   static Future<void> showImmediateNotification(Medication medication) async {

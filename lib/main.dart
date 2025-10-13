@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart'; // Added for Firebase init
-import 'package:flutter_native_splash/flutter_native_splash.dart'; // Assuming this is needed from your version
-import 'app.dart'; // Assuming this holds your main App widget
-import 'services/notification_service.dart'; // Where we move notification init logic
-import 'services/storage_service.dart'; // Assuming this service exists
+import 'package:flutter_native_splash/flutter_native_splash.dart';
+import 'app.dart';
+import 'services/notification_service.dart';
+import 'services/storage_service.dart';
 
 Future<void> main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
-  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding); // From your version
-  await Firebase.initializeApp();
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+
   await StorageService.init();
   await NotificationService.initialize();
+  await NotificationService.requestPermissions();
 
   runApp(const App());
 }

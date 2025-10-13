@@ -54,7 +54,14 @@ class MedicationController with ChangeNotifier {
   Future<void> fetchMedications() async {
     try {
       final response = await ApiService.get('/drugs/');
-      final List<dynamic> medicationsJson = response as List<dynamic>;
+      List<dynamic> medicationsJson;
+      if (response is List) {
+        medicationsJson = response;
+      } else if (response is Map<String, dynamic> && response['data'] is List) {
+        medicationsJson = response['data'] as List<dynamic>;
+      } else {
+        medicationsJson = const [];
+      }
       _medications.clear();
       _medications.addAll(medicationsJson.map((json) => Medication.fromJson(json)).toList());
       notifyListeners();
@@ -79,7 +86,10 @@ class MedicationController with ChangeNotifier {
 
     try {
       final response = await ApiService.post('/drugs/', medication.toJson());
-      final newMedication = Medication.fromJson(response);
+      final payload = (response is Map<String, dynamic> && response['data'] is Map<String, dynamic>)
+          ? response['data'] as Map<String, dynamic>
+          : response as Map<String, dynamic>;
+      final newMedication = Medication.fromJson(payload);
       _medications.add(newMedication);
       await NotificationService.scheduleMedicationNotifications(newMedication);
       notifyListeners();
@@ -114,6 +124,11 @@ class MedicationController with ChangeNotifier {
       try {
         await ApiService.put('/drugs/$id/', updatedMedication.toJson());
         _medications[index] = updatedMedication;
+        await NotificationService.cancelDoseNotifications(
+          id,
+          date,
+          doseNumber,
+        );
         notifyListeners();
         final dateStr = "${date.day}/${date.month}/${date.year}";
         print('${!currentStatus ? '✅' : '❌'} ${medication.name} dose $doseNumber ${!currentStatus ? 'taken' : 'not taken'} on $dateStr');
