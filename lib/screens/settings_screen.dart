@@ -5,7 +5,9 @@ import '../services/storage_service.dart';
 import '../services/notification_service.dart';
 
 class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({super.key});
+  final VoidCallback? onNavigateBack;
+  
+  const SettingsScreen({super.key, this.onNavigateBack});
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -19,10 +21,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void initState() {
     super.initState();
-    _loadUserInfo();
+    // Defer context-dependent operations until after the first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadUserInfo();
+    });
   }
 
   void _loadUserInfo() {
+    if (!mounted) return;
+    
     final authController = context.read<AuthController>();
     final userData = authController.getCurrentUserData();
 
@@ -40,7 +47,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: widget.onNavigateBack != null ? null : AppBar(
         title: const Text('Settings'),
         backgroundColor: const Color(0xff0284C7),
         foregroundColor: Colors.white,
@@ -55,6 +62,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Header when shown in bottom navigation
+            if (widget.onNavigateBack != null) ...[
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.02, vertical: 16),
+                child: Text(
+                  'Settings',
+                  style: TextStyle(
+                    fontSize: screenWidth * 0.07,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xff0284C7),
+                  ),
+                ),
+              ),
+            ],
+            
             // User Info Section
             if (_currentUserName.isNotEmpty) ...[
               _buildSectionHeader('Account Information', screenWidth),

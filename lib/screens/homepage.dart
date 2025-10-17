@@ -12,6 +12,7 @@ import '../features/chatbot/screens/chatbot_screen.dart';
 import '../services/storage_service.dart';
 import '../core/constants/app_constants.dart';
 import 'profile_screen.dart';
+import '../features/meal/screens/nutrition_assistant_screen.dart';
 
 class Homepage extends StatefulWidget {
   const Homepage({super.key});
@@ -61,8 +62,7 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
           _userPhone = (userMap['phone'] ?? '').toString();
         });
       }
-    } catch (_) {
-    }
+    } catch (_) {}
   }
 
   void _loadMedications() {
@@ -80,7 +80,7 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
         offset: const Offset(0, -8),
         child: Container(
           width: 75,
-          height:75,
+          height: 75,
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [Colors.blue.shade400, Colors.blue.shade600],
@@ -104,14 +104,17 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
               child: Center(
                 child: Column(
                   children: [
-                    SizedBox(height: 10,),
+                    SizedBox(height: 10),
                     Image.asset(
                       "assets/logos/chat-bot.png",
                       width: 28,
                       height: 28,
                       color: Colors.white,
                     ),
-                    Text('3awnBot',style: TextStyle(color: Colors.white,fontSize: 14),)
+                    Text(
+                      '3awnBot',
+                      style: TextStyle(color: Colors.white, fontSize: 14),
+                    ),
                   ],
                 ),
               ),
@@ -129,9 +132,12 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
         index: _selectedIndex,
         children: [
           _buildHomeContent(),
+          const NutritionAssistantScreen(),
           _buildMedicationsContent(),
           const SOSScreen(),
-          const SettingsScreen(),
+          SettingsScreen(onNavigateBack: () {
+            setState(() => _selectedIndex = 0);
+          }),
         ],
       ),
     );
@@ -141,7 +147,7 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
     return LayoutBuilder(
       builder: (context, constraints) {
         final screenWidth = constraints.maxWidth;
-        final availableHeight = constraints.maxHeight;
+        final availableHeight = constraints.maxHeight ;
 
         return Column(
           children: [
@@ -153,9 +159,7 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
                   vertical: 16,
                 ),
                 child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minHeight: availableHeight - 120,
-                  ),
+                  constraints: BoxConstraints(minHeight: availableHeight - 120),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -309,7 +313,10 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
                 label: 'Scan Medicine',
                 icon: Icons.qr_code_scanner,
                 onPressed: () {
-                  Navigator.pushNamed(context, AppConstants.medicationScannerRoute);
+                  Navigator.pushNamed(
+                    context,
+                    AppConstants.medicationScannerRoute,
+                  );
                 },
               ),
               _buildResponsiveButton(
@@ -318,14 +325,15 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const FindAlternativeScreen()),
+                    MaterialPageRoute(
+                      builder: (context) => const FindAlternativeScreen(),
+                    ),
                   );
                 },
               ),
             ],
           ),
         ),
-
       ],
     );
   }
@@ -335,7 +343,9 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
 
     return Consumer<MedicationController>(
       builder: (context, medicationController, child) {
-        final upcomingDoses = medicationController.getMedicationsByDate(_selectedDate);
+        final upcomingDoses = medicationController.getMedicationsByDate(
+          _selectedDate,
+        );
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -411,7 +421,8 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
                     bottom: index == upcomingDoses.length - 1 ? 0 : 12,
                   ),
                   child: MedicationReminderCard(
-                    medicationName: '${dose.medication.name} ${dose.medication.dosage}',
+                    medicationName:
+                        '${dose.medication.name} ${dose.medication.dosage}',
                     time: dose.doseLabel,
                     doseDescription: dose.doseDescription,
                     isCompleted: dose.isTaken,
@@ -420,9 +431,9 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
                     doseNumber: dose.doseNumber,
                     onComplete: () {
                       medicationController.toggleMedicationDose(
-                          dose.medication.id,
-                          _selectedDate,
-                          dose.doseNumber
+                        dose.medication.id,
+                        _selectedDate,
+                        dose.doseNumber,
                       );
                     },
                   ),
@@ -439,7 +450,9 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
       animation: _animation,
       builder: (context, child) {
         final medicationTypes = ['tablet', 'capsule', 'drop', 'injection'];
-        final currentTypeIndex = (_animation.value * medicationTypes.length).floor() % medicationTypes.length;
+        final currentTypeIndex =
+            (_animation.value * medicationTypes.length).floor() %
+            medicationTypes.length;
         final currentType = medicationTypes[currentTypeIndex];
 
         return Container(
@@ -580,19 +593,21 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
               ),
               SizedBox(height: screenHeight * 0.02),
 
-              ...allMedications.map((medication) => Padding(
-                padding: EdgeInsets.only(bottom: screenHeight * 0.015),
-                child: MedicationReminderCard(
-                  medicationName: '${medication.name} ${medication.dosage}',
-                  time: medication.time,
-                  isCompleted: medication.isCompletelyFinished,
-                  medication: medication,
-                  onComplete: () {
-                    medicationController.toggleMedicationTaken(medication.id);
-                  },
-                  isInMedicationScreen: true,
+              ...allMedications.map(
+                (medication) => Padding(
+                  padding: EdgeInsets.only(bottom: screenHeight * 0.015),
+                  child: MedicationReminderCard(
+                    medicationName: '${medication.name} ${medication.dosage}',
+                    time: medication.time,
+                    isCompleted: medication.isCompletelyFinished,
+                    medication: medication,
+                    onComplete: () {
+                      medicationController.toggleMedicationTaken(medication.id);
+                    },
+                    isInMedicationScreen: true,
+                  ),
                 ),
-              )),
+              ),
               SizedBox(height: screenHeight * 0.1),
             ],
           ),
@@ -735,6 +750,7 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
       ],
     );
   }
+
   Widget _buildResponsiveButton({
     required String label,
     required IconData icon,
@@ -784,17 +800,20 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
       type: BottomNavigationBarType.fixed,
       currentIndex: _selectedIndex,
       onTap: (index) {
-        if (index == 3) {
-          _navigateToSettings();
-        } else {
-          setState(() => _selectedIndex = index);
-        }
+        setState(() => _selectedIndex = index);
       },
-      selectedItemColor: Color(0xff0284C7),
+      selectedItemColor: const Color(0xff0284C7),
       unselectedItemColor: Colors.grey,
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-        BottomNavigationBarItem(icon: Icon(Icons.medication), label: 'Medications'),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.restaurant_menu),
+          label: 'Meal',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.medication),
+          label: 'Medications',
+        ),
         BottomNavigationBarItem(icon: Icon(Icons.emergency), label: 'SOS'),
         BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
       ],
@@ -810,15 +829,27 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
 
   String _formatHeaderDate(DateTime date) {
     const monthNames = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${monthNames[date.month - 1]} ${date.day}';
   }
 
   String _formatDateForDisplay(DateTime date) {
     final today = DateTime.now();
-    if (date.year == today.year && date.month == today.month && date.day == today.day) {
+    if (date.year == today.year &&
+        date.month == today.month &&
+        date.day == today.day) {
       return 'today';
     }
     return _formatHeaderDate(date);
