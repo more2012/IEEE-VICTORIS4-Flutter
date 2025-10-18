@@ -59,14 +59,14 @@ class _MealPlanScreenState extends State<MealPlanScreen> with SingleTickerProvid
           Container(
             width: double.infinity,
             color: Colors.white,
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
                   'Your Personalized Meal Plan',
                   style: TextStyle(
-                    fontSize: 22,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: Colors.black,
                   ),
@@ -75,7 +75,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> with SingleTickerProvid
                 Text(
                   'Tailored for ${widget.userProfile.gender}\'s health needs',
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 13,
                     color: Colors.grey.shade600,
                   ),
                 ),
@@ -92,22 +92,28 @@ class _MealPlanScreenState extends State<MealPlanScreen> with SingleTickerProvid
               unselectedLabelColor: Colors.grey,
               indicatorColor: const Color(0xff0284C7),
               indicatorWeight: 3,
-              tabs: [
+              isScrollable: false,
+              labelPadding: const EdgeInsets.symmetric(horizontal: 2),
+              tabs: const [
                 Tab(
-                  icon: const Text('☀️', style: TextStyle(fontSize: 24)),
-                  child: const Text('Breakfast', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                  height: 60,
+                  icon: Text('☀️', style: TextStyle(fontSize: 18)),
+                  text: 'Breakfast',
                 ),
                 Tab(
-                  icon: const Text('🌞', style: TextStyle(fontSize: 24)),
-                  child: const Text('Lunch', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                  height: 60,
+                  icon: Text('🌞', style: TextStyle(fontSize: 18)),
+                  text: 'Lunch',
                 ),
                 Tab(
-                  icon: const Text('🌙', style: TextStyle(fontSize: 24)),
-                  child: const Text('Dinner', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                  height: 60,
+                  icon: Text('🌙', style: TextStyle(fontSize: 18)),
+                  text: 'Dinner',
                 ),
                 Tab(
-                  icon: const Text('🍿', style: TextStyle(fontSize: 24)),
-                  child: const Text('Snacks', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                  height: 60,
+                  icon: Text('🍿', style: TextStyle(fontSize: 18)),
+                  text: 'Snacks',
                 ),
               ],
             ),

@@ -4,6 +4,8 @@ import 'package:awan/screens/sos_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:convert';
+import 'package:geolocator/geolocator.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../shared/widgets/medication_reminder_card.dart';
 import 'package:date_picker_timeline/date_picker_timeline.dart';
 import '../features/medication/controllers/medication_controller.dart';
@@ -300,39 +302,48 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
         ),
         const SizedBox(height: 20),
 
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              _buildResponsiveButton(
-                label: 'Add New Med',
-                icon: Icons.add,
-                onPressed: _navigateToAddMedication,
-              ),
-              _buildResponsiveButton(
-                label: 'Scan Medicine',
-                icon: Icons.qr_code_scanner,
-                onPressed: () {
-                  Navigator.pushNamed(
-                    context,
-                    AppConstants.medicationScannerRoute,
-                  );
-                },
-              ),
-              _buildResponsiveButton(
-                label: 'Find Alt',
-                icon: Icons.search,
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const FindAlternativeScreen(),
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
+        // 2x2 Grid Layout for Quick Actions
+        GridView.count(
+          crossAxisCount: 2,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
+          childAspectRatio: 2.8, // Adjusted for smaller height
+          children: [
+            _buildGridActionButton(
+              label: 'Add New Med',
+              icon: Icons.add,
+              onPressed: _navigateToAddMedication,
+            ),
+            _buildGridActionButton(
+              label: 'Scan Medicine',
+              icon: Icons.qr_code_scanner,
+              onPressed: () {
+                Navigator.pushNamed(
+                  context,
+                  AppConstants.medicationScannerRoute,
+                );
+              },
+            ),
+            _buildGridActionButton(
+              label: 'Find Alt',
+              icon: Icons.search,
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const FindAlternativeScreen(),
+                  ),
+                );
+              },
+            ),
+            _buildGridActionButton(
+              label: 'Nearby Pharmacies',
+              icon: Icons.local_pharmacy,
+              onPressed: _openNearbyPharmacies,
+            ),
+          ],
         ),
       ],
     );
@@ -751,45 +762,37 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildResponsiveButton({
+  Widget _buildGridActionButton({
     required String label,
     required IconData icon,
     required VoidCallback onPressed,
   }) {
-    return Container(
-      constraints: const BoxConstraints(
-        minWidth: 120,
-        maxWidth: 160, // الزر بيتغير حسب المساحة
-      ),
-      height: 50,
-      margin: const EdgeInsets.only(right: 12),
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xff0284C7),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 8),
+    return ElevatedButton(
+      onPressed: onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xff0284C7),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: Colors.white, size: 20),
-            const SizedBox(width: 6),
-            Flexible(
-              child: Text(
-                label,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: Colors.white, size: 20),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              label,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -853,6 +856,116 @@ class _HomepageState extends State<Homepage> with TickerProviderStateMixin {
       return 'today';
     }
     return _formatHeaderDate(date);
+  }
+
+  Future<void> _openNearbyPharmacies() async {
+    try {
+      // Check if location services are enabled
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Location services are disabled. Please enable them.'),
+            backgroundColor: Colors.orange,
+            duration: Duration(seconds: 3),
+          ),
+        );
+        return;
+      }
+
+      // Check location permissions
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Location permission denied. Please grant permission.'),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 3),
+            ),
+          );
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Location permissions are permanently denied. Please enable them in settings.',
+            ),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 4),
+          ),
+        );
+        return;
+      }
+
+      // Show loading indicator
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(
+            children: [
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              ),
+              SizedBox(width: 16),
+              Text('Getting your location...'),
+            ],
+          ),
+          duration: Duration(seconds: 2),
+        ),
+      );
+
+      // Get current position
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      // Build Google Maps URL with Arabic search query for pharmacies
+      // Using "صيدلية" (pharmacy in Arabic) as the search term
+      final String googleMapsUrl =
+          'https://www.google.com/maps/search/?api=1&query=صيدلية&query_place_id=&center=${position.latitude},${position.longitude}';
+
+      final Uri uri = Uri.parse(googleMapsUrl);
+
+      // Try to launch the URL
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication, // Opens in native Maps app
+        );
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not open Google Maps. Please try again.'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      // Handle any errors during the process
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
   }
 
   void _navigateToAddMedication() {

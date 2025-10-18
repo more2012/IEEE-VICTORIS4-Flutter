@@ -60,16 +60,18 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         ),
         centerTitle: false,
       ),
-      // Note: NOT wrapping everything in a single scroll view.
+      // Wrapped in SingleChildScrollView for responsive layout
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 460),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 460),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
                   // White card with title and the four inputs (Age/Gender / Weight/Height)
                   Container(
                     decoration: BoxDecoration(
@@ -252,7 +254,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: SizedBox(
-                          height: 220, // fixed height so only this area scrolls
+                          height: 180, // Reduced height for better responsiveness
                           child: Scrollbar(
                             thumbVisibility: true,
                             child: ListView.builder(
@@ -317,7 +319,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       ),
                     ),
                   ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
