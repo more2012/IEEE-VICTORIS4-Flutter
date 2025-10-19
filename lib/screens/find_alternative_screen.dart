@@ -12,25 +12,50 @@ class FindAlternativeScreen extends StatefulWidget {
   State<FindAlternativeScreen> createState() => _FindAlternativeScreenState();
 }
 
-class _FindAlternativeScreenState extends State<FindAlternativeScreen> {
+class _FindAlternativeScreenState extends State<FindAlternativeScreen> with SingleTickerProviderStateMixin {
   final TextEditingController _medicineNameController = TextEditingController();
   final AlternativeMedicineService _alternativeService = AlternativeMedicineService();
   List<AlternativeMedicine> _alternatives = [];
+  List<AlternativeMedicine> _herbalAlternatives = [];
   bool _isLoading = false;
   bool _hasSearched = false;
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(_onTabChanged);
     if (widget.initialSearchTerm != null && widget.initialSearchTerm!.isNotEmpty) {
       _medicineNameController.text = widget.initialSearchTerm!;
       Future.microtask(() => _findAlternatives());
     }
   }
 
+  void _onTabChanged() {
+    if (_tabController.indexIsChanging) {
+      return;
+    }
+    // Fetch data when tab changes
+    if (_hasSearched && _medicineNameController.text.trim().isNotEmpty) {
+      if (_tabController.index == 0) {
+        // By Medicine tab
+        if (_alternatives.isEmpty && !_isLoading) {
+          _findAlternatives();
+        }
+      } else {
+        // By Herbs tab
+        if (_herbalAlternatives.isEmpty && !_isLoading) {
+          _findHerbalAlternatives();
+        }
+      }
+    }
+  }
+
   @override
   void dispose() {
     _medicineNameController.dispose();
+    _tabController.dispose();
     super.dispose();
   }
 
@@ -57,15 +82,100 @@ class _FindAlternativeScreenState extends State<FindAlternativeScreen> {
         _medicineNameController.text.trim(),
       );
 
+      // Also fetch herbal alternatives if on herbs tab
+      List<AlternativeMedicine> herbalAlternatives = [];
+      if (_tabController.index == 1) {
+        herbalAlternatives = await _alternativeService.getHerbalAlternatives(
+          _medicineNameController.text.trim(),
+        );
+      }
+
       setState(() {
         _alternatives = alternatives;
+        _herbalAlternatives = herbalAlternatives;
         _isLoading = false;
       });
 
-      if (alternatives.isEmpty) {
+      if (_tabController.index == 0) {
+        if (alternatives.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('No alternatives found for "${_medicineNameController.text.trim()}"'),
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Found ${alternatives.length} alternatives!'),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      } else {
+        if (herbalAlternatives.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('No herbal alternatives found for "${_medicineNameController.text.trim()}"'),
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Found ${herbalAlternatives.length} herbal alternatives!'),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print('❌ Error finding alternatives: $e');
+      setState(() {
+        _isLoading = false;
+        _alternatives = [];
+        _herbalAlternatives = [];
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error finding alternatives: ${e.toString().replaceAll('Exception: ', '')}'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    }
+  }
+
+  Future<void> _findHerbalAlternatives() async {
+    if (_medicineNameController.text.trim().isEmpty) {
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      print('🌿 Searching for herbal alternatives: ${_medicineNameController.text.trim()}');
+
+      final herbalAlternatives = await _alternativeService.getHerbalAlternatives(
+        _medicineNameController.text.trim(),
+      );
+
+      setState(() {
+        _herbalAlternatives = herbalAlternatives;
+        _isLoading = false;
+      });
+
+      if (herbalAlternatives.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('No alternatives found for "${_medicineNameController.text.trim()}"'),
+            content: Text('No herbal alternatives found for "${_medicineNameController.text.trim()}"'),
             backgroundColor: Colors.orange,
             duration: const Duration(seconds: 3),
           ),
@@ -73,22 +183,22 @@ class _FindAlternativeScreenState extends State<FindAlternativeScreen> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Found ${alternatives.length} alternatives!'),
+            content: Text('Found ${herbalAlternatives.length} herbal alternatives!'),
             backgroundColor: Colors.green,
             duration: const Duration(seconds: 2),
           ),
         );
       }
     } catch (e) {
-      print('❌ Error finding alternatives: $e');
+      print('❌ Error finding herbal alternatives: $e');
       setState(() {
         _isLoading = false;
-        _alternatives = [];
+        _herbalAlternatives = [];
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error finding alternatives: ${e.toString().replaceAll('Exception: ', '')}'),
+          content: Text('Error finding herbal alternatives: ${e.toString().replaceAll('Exception: ', '')}'),
           backgroundColor: Colors.red,
           duration: const Duration(seconds: 4),
         ),
@@ -142,7 +252,7 @@ class _FindAlternativeScreenState extends State<FindAlternativeScreen> {
                   child: TextField(
                     controller: _medicineNameController,
                     decoration: InputDecoration(
-                      hintText: 'Medicine Name (e.g., Panadol, Aspirin)',
+                      hintText: 'Enter Medicine Name',
                       hintStyle: TextStyle(color: Colors.grey.shade500),
                       prefixIcon: Icon(Icons.search, color: Colors.grey.shade400),
                       suffixIcon: _medicineNameController.text.isNotEmpty
@@ -153,6 +263,7 @@ class _FindAlternativeScreenState extends State<FindAlternativeScreen> {
                           setState(() {
                             _hasSearched = false;
                             _alternatives = [];
+                            _herbalAlternatives = [];
                           });
                         },
                       )
@@ -205,11 +316,38 @@ class _FindAlternativeScreenState extends State<FindAlternativeScreen> {
               ],
             ),
           ),
+          // TabBar
+          Container(
+            color: Colors.white,
+            child: TabBar(
+              controller: _tabController,
+              labelColor: const Color(0xFF0284C7),
+              unselectedLabelColor: Colors.grey,
+              indicatorColor: const Color(0xFF0284C7),
+              indicatorWeight: 3,
+              tabs: const [
+                Tab(
+                  icon: Icon(Icons.medication),
+                  text: 'By Medicine',
+                ),
+                Tab(
+                  icon: Icon(Icons.spa),
+                  text: 'By Herbs',
+                ),
+              ],
+            ),
+          ),
           // Content Area
           Expanded(
             child: Container(
               color: const Color(0xFFF8F9FA),
-              child: _buildContent(),
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildMedicineTab(),
+                  _buildHerbsTab(),
+                ],
+              ),
             ),
           ),
         ],
@@ -217,7 +355,7 @@ class _FindAlternativeScreenState extends State<FindAlternativeScreen> {
     );
   }
 
-  Widget _buildContent() {
+  Widget _buildMedicineTab() {
     if (!_hasSearched) {
       return Column(
         children: [
@@ -455,6 +593,230 @@ class _FindAlternativeScreenState extends State<FindAlternativeScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildHerbsTab() {
+    if (!_hasSearched) {
+      return SingleChildScrollView(
+        child: Column(
+          children: [
+            const SizedBox(height: 40),
+            // Image
+            Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE0F2FE),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Container(
+                child: Image.asset(
+                  'assets/images/find-herbs-image.png',
+                  width: 80,
+                  height: 80,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Icon(
+                      Icons.spa,
+                      size: 60,
+                      color: Color(0xFF0284C7),
+                    );
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(height: 30),
+            // Instructions
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 40),
+              child: Text(
+                'Discover safe herbal substitutes for your medications.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Color(0xFF6B7280),
+                  height: 1.5,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    } else if (_isLoading) {
+      // Loading state
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation(Color(0xFF0284C7)),
+            ),
+            SizedBox(height: 16),
+            Text(
+              'Searching for herbal alternatives...',
+              style: TextStyle(
+                fontSize: 16,
+                color: Color(0xFF6B7280),
+              ),
+            ),
+          ],
+        ),
+      );
+    } else if (_herbalAlternatives.isEmpty) {
+      // No results state
+      return Center(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Image
+              Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE0F2FE),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Container(
+                  child: Image.asset(
+                    'assets/images/find-herbs-image.png',
+                    width: 80,
+                    height: 80,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Icon(
+                        Icons.spa,
+                        size: 60,
+                        color: Color(0xFF0284C7),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 30),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 40),
+                child: Text(
+                  'Discover safe herbal substitutes for your medications.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Color(0xFF6B7280),
+                    height: 1.5,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 40),
+              Icon(
+                Icons.search_off,
+                size: 64,
+                color: Colors.grey.shade400,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'No herbal alternatives found',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF374151),
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Try searching with a different medicine name',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF6B7280),
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    } else {
+      // Results state
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Image and text at top
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE0F2FE),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Container(
+                    child: Image.asset(
+                      'assets/images/find-herbs-image.png',
+                      width: 70,
+                      height: 70,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Icon(
+                          Icons.spa,
+                          size: 50,
+                          color: Color(0xFF0284C7),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Discover safe herbal substitutes for your medications.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF6B7280),
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    const Text(
+                      'Herbal Alternatives',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1F2937),
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      '${_herbalAlternatives.length} found',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              itemCount: _herbalAlternatives.length,
+              itemBuilder: (context, index) {
+                final alternative = _herbalAlternatives[index];
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: AlternativeMedicineCard(
+                    alternative: alternative,
+                    onAddPressed: () => _addAlternativeToMedicines(alternative),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      );
+    }
   }
 
   void _addAlternativeToMedicines(AlternativeMedicine alternative) {

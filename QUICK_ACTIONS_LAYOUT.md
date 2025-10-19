@@ -1,4 +1,4 @@
-# Quick Actions Layout - Before & After
+ Quick Actions Layout - Before & After
 
 ## Before (Horizontal Scrollable)
 ```

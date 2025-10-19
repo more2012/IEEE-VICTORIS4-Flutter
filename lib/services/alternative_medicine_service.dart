@@ -62,7 +62,6 @@ class AlternativeMedicineService {
     return null;
   }
 
-  /// FIXED: Fetch alternatives by medicine name (not ID) as required by backend
   Future<List<AlternativeMedicine>> getAlternativesByMedicineName(String medicineName) async {
     // URL-encode the medicine name to handle spaces/special characters safely
     final encodedMedicineName = Uri.encodeComponent(medicineName);
@@ -109,6 +108,65 @@ class AlternativeMedicineService {
       return await getAlternativesByMedicineName(medicineName);
     } catch (e) {
       print('❌ Error in findAlternatives: $e');
+      return [];
+    }
+  }
+
+  Future<List<AlternativeMedicine>> getHerbalAlternatives(String medicineName) async {
+    final encodedMedicineName = Uri.encodeComponent(medicineName);
+    // Try the correct endpoint - it might be /drugs/herbal-alternatives or similar
+    final herbsUrl = '$_baseUrl/drugs/alternatives/herbs?name=$encodedMedicineName';
+
+    print('🌿 Fetching herbal alternatives from: $herbsUrl');
+
+    try {
+      final response = await http.get(Uri.parse(herbsUrl), headers: _headers);
+
+      print('🔸 Herbs Response Status: ${response.statusCode}');
+      print('🔸 Herbs Response Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        if (response.body.trim().isEmpty) {
+          print('Warning: Herbs returned 200 but body was empty.');
+          return [];
+        }
+
+        final data = jsonDecode(response.body);
+        
+        // Handle the response structure: {"drug": "...", "herbal_alternatives": [...]}
+        if (data is Map<String, dynamic> && data.containsKey('herbal_alternatives')) {
+          final herbsList = data['herbal_alternatives'] as List;
+          print('✅ Successfully fetched ${herbsList.length} herbal alternatives.');
+          
+          // Convert string list to AlternativeMedicine objects
+          return herbsList.map((herbName) {
+            return AlternativeMedicine(
+              id: herbName.toString(),
+              name: herbName.toString(),
+              activeIngredient: 'Herbal',
+              dosage: 'As directed',
+              manufacturer: 'Natural',
+              price: 0.0,
+              description: 'Herbal alternative',
+              similarityPercentage: 0.0,
+              sideEffects: [],
+              availability: 'Available',
+              imageUrl: '',
+            );
+          }).toList();
+        } else if (data is List) {
+          // Fallback if it returns a list directly
+          print('✅ Successfully fetched ${data.length} herbal alternatives.');
+          return data.map((json) => AlternativeMedicine.fromJson(json)).toList();
+        } else {
+          print('⚠️ Herbs endpoint returned unexpected data structure: $data');
+        }
+      } else {
+        print('❌ Error fetching herbal alternatives (Status ${response.statusCode}): ${response.body}');
+      }
+      return [];
+    } catch (e) {
+      print('❌ Error fetching herbal alternatives: $e');
       return [];
     }
   }
