@@ -357,73 +357,76 @@ class _FindAlternativeScreenState extends State<FindAlternativeScreen> with Sing
 
   Widget _buildMedicineTab() {
     if (!_hasSearched) {
-      return Column(
-        children: [
-          const SizedBox(height: 40),
-          // Image
-          Container(
-            width: 120,
-            height: 120,
-            decoration: BoxDecoration(
-              color: const Color(0xFFE0F2FE),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Container(
-              child: Image.asset(
-                'assets/images/find-alternative-image.png',
-                width: 80,
-                height: 80,
-                errorBuilder: (context, error, stackTrace) {
-                  return const Icon(
-                    Icons.medical_services,
-                    size: 60,
-                    color: Color(0xFF0284C7),
-                  );
-                },
+      return SingleChildScrollView(
+        child: Column(
+          children: [
+            const SizedBox(height: 40),
+            // Image
+            Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE0F2FE),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Container(
+                child: Image.asset(
+                  'assets/images/find-alternative-image.png',
+                  width: 80,
+                  height: 80,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Icon(
+                      Icons.medical_services,
+                      size: 60,
+                      color: Color(0xFF0284C7),
+                    );
+                  },
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 30),
-          // Instructions
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 40),
-            child: Text(
-              'Type the name of your medicine to find available alternatives with the same active ingredient.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                color: Color(0xFF6B7280),
-                height: 1.5,
+            const SizedBox(height: 30),
+            // Instructions
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 40),
+              child: Text(
+                'Type the name of your medicine to find available alternatives with the same active ingredient.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Color(0xFF6B7280),
+                  height: 1.5,
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 40),
-          // Feature Cards
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
-              children: [
-                _buildFeatureCard(
-                  icon: Icons.search,
-                  text: 'Search by medicine name',
-                  color: const Color(0xFF3B82F6),
-                ),
-                const SizedBox(height: 12),
-                _buildFeatureCard(
-                  icon: Icons.check_circle,
-                  text: 'Same active ingredients',
-                  color: const Color(0xFF10B981),
-                ),
-                const SizedBox(height: 12),
-                _buildFeatureCard(
-                  icon: Icons.attach_money,
-                  text: 'Compare prices',
-                  color: const Color(0xFF3B82F6),
-                ),
-              ],
+            const SizedBox(height: 40),
+            // Feature Cards
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                children: [
+                  _buildFeatureCard(
+                    icon: Icons.search,
+                    text: 'Search by medicine name',
+                    color: const Color(0xFF3B82F6),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildFeatureCard(
+                    icon: Icons.check_circle,
+                    text: 'Same active ingredients',
+                    color: const Color(0xFF10B981),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildFeatureCard(
+                    icon: Icons.attach_money,
+                    text: 'Compare prices',
+                    color: const Color(0xFF3B82F6),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 20),
+          ],
+        ),
       );
     } else if (_isLoading) {
       // Loading state
@@ -733,67 +736,29 @@ class _FindAlternativeScreenState extends State<FindAlternativeScreen> with Sing
         ),
       );
     } else {
-      // Results state
+      // Results state - Hide image and text, show only results like By Medicine tab
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Image and text at top
           Padding(
             padding: const EdgeInsets.all(20),
-            child: Column(
+            child: Row(
               children: [
-                Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE0F2FE),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Container(
-                    child: Image.asset(
-                      'assets/images/find-herbs-image.png',
-                      width: 70,
-                      height: 70,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Icon(
-                          Icons.spa,
-                          size: 50,
-                          color: Color(0xFF0284C7),
-                        );
-                      },
-                    ),
+                const Text(
+                  'Herbal Alternatives',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1F2937),
                   ),
                 ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Discover safe herbal substitutes for your medications.',
-                  textAlign: TextAlign.center,
+                const Spacer(),
+                Text(
+                  '${_herbalAlternatives.length} found',
                   style: TextStyle(
                     fontSize: 14,
-                    color: Color(0xFF6B7280),
-                    height: 1.5,
+                    color: Colors.grey.shade600,
                   ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    const Text(
-                      'Herbal Alternatives',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1F2937),
-                      ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      '${_herbalAlternatives.length} found',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                  ],
                 ),
               ],
             ),

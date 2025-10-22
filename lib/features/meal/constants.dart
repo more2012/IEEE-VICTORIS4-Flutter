@@ -1,11 +1,11 @@
 // Meal Feature Constants
-// Google AI Studio API Configuration
+import '../../core/config/env_config.dart';
 
-// Primary API key for nutrition service (has separate quota)
-const String GOOGLE_AI_API_KEY = "AIzaSyBgvE3mzni6IOGomkoexACyzqwyUAkgoY8";
-// Fallback API key (shared with medication/chatbot - use if primary fails)
-const String GOOGLE_AI_API_KEY_FALLBACK = "AIzaSyCiesWCBdEle03bZG7Vf491t2KgiYyKCnY";
-const String GOOGLE_AI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+// Google AI Studio API Configuration
+// API keys are now loaded from .env file for security
+String get GOOGLE_AI_API_KEY => EnvConfig.googleAiApiKey;
+String get GOOGLE_AI_API_KEY_FALLBACK => EnvConfig.googleAiApiKeyFallback;
+String get GOOGLE_AI_ENDPOINT => EnvConfig.googleAiEndpoint;
 
 const Duration API_TIMEOUT = Duration(seconds: 30);
 enum MealType {

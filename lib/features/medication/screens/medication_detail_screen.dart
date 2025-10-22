@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'dart:async';
 import '../models/medication_model.dart';
 import '../controllers/medication_controller.dart';
+import '../../../core/config/env_config.dart';
 
 class MedicationDetailScreen extends StatefulWidget {
   final Medication medication;
@@ -23,10 +24,9 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
   String _dosageInfo = '';
   String _interactions = '';
 
-  //Gemini API key
-  static const String _apiKey = 'AIzaSyCiesWCBdEle03bZG7Vf491t2KgiYyKCnY';
-  static const String _apiUrl =
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+  //Gemini API key - loaded from .env file
+  static String get _apiKey => EnvConfig.googleAiApiKeyFallback;
+  static String get _apiUrl => EnvConfig.googleAiEndpoint;
 
   @override
   void initState() {

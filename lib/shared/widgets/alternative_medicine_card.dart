@@ -83,30 +83,6 @@ class AlternativeMedicineCard extends StatelessWidget {
               ),
             ),
           ],
-          const SizedBox(height: 8),
-
-          // Manufacturer and price
-          Row(
-            children: [
-              // Expanded(
-              //   child: Text(
-              //     'By: ${alternative.manufacturer}',
-              //     style: const TextStyle(
-              //       fontSize: 13,
-              //       color: Color(0xFF8E8E93),
-              //     ),
-              //   ),
-              // ),
-              Text(
-                'EGP ${alternative.price.toStringAsFixed(0)}',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF007AFF),
-                ),
-              ),
-            ],
-          ),
 
           if (alternative.description.isNotEmpty) ...[
             const SizedBox(height: 8),

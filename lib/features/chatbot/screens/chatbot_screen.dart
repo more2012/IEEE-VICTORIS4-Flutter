@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
+import '../../../core/config/env_config.dart';
 
 class ChatbotScreen extends StatefulWidget {
   const ChatbotScreen({super.key});
@@ -16,10 +17,9 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   final List<ChatMessage> _messages = [];
   bool _isLoading = false;
 
-  //Gemini API key
-  static const String _apiKey = 'AIzaSyCiesWCBdEle03bZG7Vf491t2KgiYyKCnY';
-  static const String _apiUrl =
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+  //Gemini API key - loaded from .env file
+  static String get _apiKey => EnvConfig.googleAiApiKeyFallback;
+  static String get _apiUrl => EnvConfig.googleAiEndpoint;
 
   @override
   void initState() {
